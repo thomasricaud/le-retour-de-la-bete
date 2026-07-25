@@ -3,9 +3,27 @@
 Ce document est le contrat de production et d'intégration des 42 ressources audio
 référencées par `GameSequence.kt` et `GameViewModel.kt`.
 
-Les fichiers audio ne sont pas fournis dans le dépôt. Les textes ci-dessous sont les
-textes français exacts à enregistrer. Ne pas ajouter à l'enregistrement les indications
-de production signalées comme non parlées.
+Six fichiers audio issus des sources locales sont fournis dans le dépôt. Les 36
+ressources restantes doivent encore être produites. Les textes ci-dessous sont les
+textes français exacts à enregistrer. Ne pas ajouter à l'enregistrement les
+indications de production signalées comme non parlées.
+
+## État d'intégration
+
+Ressources présentes dans `app/src/main/res/raw/` :
+
+- `commun_001_nuit_depart_30.mp3` ;
+- `commun_002_bips_11.mp3` ;
+- `commun_005_cocorico.mp3` ;
+- `commun_006_reveil_village.mp3` ;
+- `commun_012_ambiance_nuit_boucle.mp3` ;
+- `confirme_201_premiere_nuit_reveil_sang.mp3`.
+
+Ces montages ont été validés pour le prototype. Les deux consignes parlées
+conservent le fond musical des fichiers sources et ne constituent donc pas des
+voix isolées conformes à la recommandation de production ci-dessous. Le script
+`scripts/build_local_audio_candidates.ps1` permet de les reproduire sans publier
+les longues pistes sources.
 
 ## Contrat Android
 

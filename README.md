@@ -25,21 +25,23 @@ synchronisation entre téléphones.
 - Départ configurable à 30 ou 45 secondes.
 - Concertation du jour libre ou minutée.
 - Détection d'une sortie Bluetooth, USB ou filaire.
-- Fonctionnement sans les enregistrements : texte affiché et minuterie
-  silencieuse.
+- Six ressources audio intégrées pour les séquences de nuit communes et
+  confirmées ; les ressources absentes conservent le texte affiché et la
+  minuterie silencieuse.
 
-Le catalogue complet des 42 enregistrements à fournir se trouve dans
+Le catalogue complet des 42 enregistrements, dont 6 sont actuellement intégrés,
+se trouve dans
 [`docs/AUDIO_ASSETS.md`](docs/AUDIO_ASSETS.md). Le manifeste exploitable par un
 outil de production se trouve dans
 [`app/src/main/assets/audio_manifest.json`](app/src/main/assets/audio_manifest.json).
 
-## Ajouter les sons plus tard
+## Compléter les sons
 
-1. Créer `app/src/main/res/raw/`.
-2. Enregistrer ou produire les fichiers MP3 avec les noms exacts du catalogue.
-3. Copier tous les MP3 directement dans `res/raw` — Android n'accepte pas de
-   sous-dossiers dans ce répertoire.
-4. Recompiler. Aucune modification Kotlin n'est nécessaire.
+1. Enregistrer ou produire les fichiers MP3 manquants avec les noms exacts du
+   catalogue.
+2. Copier tous les MP3 directement dans `app/src/main/res/raw/` — Android
+   n'accepte pas de sous-dossiers dans ce répertoire.
+3. Recompiler. Aucune modification Kotlin n'est nécessaire.
 
 ## Construire
 
