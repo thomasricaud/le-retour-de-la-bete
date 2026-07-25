@@ -47,7 +47,11 @@ try {
         } else {
             @("testDebugUnitTest", "lintDebug", "assembleRelease")
         }
-        & ".\gradlew.bat" @tasks "--offline" "--no-daemon"
+        $gradleArgs = @()
+        $gradleArgs += $tasks
+        $gradleArgs += "--offline"
+        $gradleArgs += "--no-daemon"
+        & ".\gradlew.bat" $gradleArgs
         if ($LASTEXITCODE -ne 0) {
             throw "La construction Gradle a échoué."
         }

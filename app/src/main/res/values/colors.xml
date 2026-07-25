@@ -2,4 +2,5 @@
 <resources>
     <color name="night_ink">#07111D</color>
     <color name="blood_red">#9E2531</color>
+    <color name="launcher_background">#07111D</color>
 </resources>
