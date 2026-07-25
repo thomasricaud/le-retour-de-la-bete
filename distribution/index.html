@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07111d">
+  <title>Télécharger Le Retour de la Bête</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #07111d;
+      color: #f4e9d3;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 50% 15%, #24394d 0, #07111d 48%),
+        #07111d;
+    }
+    main {
+      width: min(560px, 100%);
+      padding: 32px;
+      text-align: center;
+      border: 1px solid #705c5f;
+      border-radius: 24px;
+      background: #0a1825ee;
+      box-shadow: 0 24px 80px #0009;
+    }
+    img {
+      width: 180px;
+      max-width: 55%;
+      border-radius: 24px;
+    }
+    h1 {
+      margin: 20px 0 8px;
+      font-family: Georgia, serif;
+      font-size: clamp(2rem, 8vw, 3.3rem);
+    }
+    p { color: #d7c7a6; line-height: 1.55; }
+    a.download {
+      display: block;
+      margin: 28px 0 14px;
+      padding: 18px 22px;
+      border-radius: 14px;
+      background: #cd4050;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 800;
+      text-decoration: none;
+    }
+    a.checksum { color: #d7c7a6; }
+    small { display: block; margin-top: 26px; color: #9aa8b5; }
+  </style>
+</head>
+<body>
+  <main>
+    <img src="app_emblem.webp" alt="">
+    <h1>Le Retour de la Bête</h1>
+    <p>Conducteur sonore Android hors ligne pour lancer et guider une partie.</p>
+    <a class="download" href="le-retour-de-la-bete.apk" download>
+      Télécharger l’application Android
+    </a>
+    <a class="checksum" href="le-retour-de-la-bete.apk.sha256">
+      Vérifier l’empreinte SHA-256
+    </a>
+    <small>
+      Android peut demander d’autoriser temporairement l’installation
+      d’applications provenant du navigateur.
+    </small>
+  </main>
+</body>
+</html>

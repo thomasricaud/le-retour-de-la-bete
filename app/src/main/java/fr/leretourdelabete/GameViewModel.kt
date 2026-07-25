@@ -1,0 +1,733 @@
+package fr.leretourdelabete
+
+import android.app.Application
+import android.content.Intent
+import android.provider.Settings
+import android.os.SystemClock
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import fr.leretourdelabete.audio.AudioEngine
+import fr.leretourdelabete.audio.AudioRouteMonitor
+import fr.leretourdelabete.audio.AudioRouteState
+import fr.leretourdelabete.data.GameSessionRepository
+import fr.leretourdelabete.domain.CueKind
+import fr.leretourdelabete.domain.GameCue
+import fr.leretourdelabete.domain.GameSequenceFactory
+import fr.leretourdelabete.domain.NightDeck
+import fr.leretourdelabete.model.DayStage
+import fr.leretourdelabete.model.DrawMode
+import fr.leretourdelabete.model.EndReason
+import fr.leretourdelabete.model.GameScreen
+import fr.leretourdelabete.model.GameSession
+import fr.leretourdelabete.model.NightColor
+import fr.leretourdelabete.model.SetupOptions
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+data class GameUiState(
+    val session: GameSession = GameSession(),
+    val setup: SetupOptions = SetupOptions(),
+    val hasSavedGame: Boolean = false,
+    val currentCue: GameCue? = null,
+    val cueTotalMillis: Long = 0L,
+    val cueRemainingMillis: Long = 0L,
+    val isSequencePlaying: Boolean = false,
+    val isSequenceComplete: Boolean = false,
+    val currentCueHasAudio: Boolean = false,
+    val dayTimerPlaying: Boolean = false,
+    val audioRoute: AudioRouteState = AudioRouteState(),
+    val statusMessage: String? = null,
+    val standaloneCueId: String? = null,
+)
+
+class GameViewModel(application: Application) : AndroidViewModel(application) {
+    private val repository = GameSessionRepository(application)
+    private val audioEngine = AudioEngine(application) {
+        pauseSequence("Lecture mise en pause : une autre application utilise le son.")
+    }
+    private val routeMonitor = AudioRouteMonitor(application) { route ->
+        val previous = _uiState.value.audioRoute
+        _uiState.value = _uiState.value.copy(audioRoute = route)
+        if (previous.external && !route.external) {
+            when {
+                _uiState.value.isSequencePlaying ->
+                    pauseSequence("Enceinte déconnectée. La partie est en pause.")
+                _uiState.value.standaloneCueId != null -> {
+                    stopStandalone()
+                    _uiState.value = _uiState.value.copy(
+                        statusMessage = "Enceinte déconnectée. La lecture a été arrêtée.",
+                    )
+                }
+            }
+        }
+    }
+
+    private val _uiState = MutableStateFlow(
+        GameUiState(hasSavedGame = repository.hasResumableSession()),
+    )
+    val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
+
+    private var activeSequence: List<GameCue> = emptyList()
+    private var sequenceJob: Job? = null
+    private var dayTimerJob: Job? = null
+    private var standaloneJob: Job? = null
+    private var lastPersistedSecond: Long = -1L
+
+    init {
+        routeMonitor.start()
+    }
+
+    fun updateSetup(transform: (SetupOptions) -> SetupOptions) {
+        _uiState.value = _uiState.value.copy(setup = transform(_uiState.value.setup))
+    }
+
+    fun openSetup() {
+        stopAllPlayback()
+        _uiState.value = _uiState.value.copy(
+            session = GameSession(screen = GameScreen.SETUP),
+            statusMessage = null,
+        )
+    }
+
+    fun startConfiguredGame() {
+        stopAllPlayback()
+        val setup = _uiState.value.setup
+        val session = GameSession(
+            screen = GameScreen.INTRO,
+            mode = setup.mode,
+            drawMode = setup.drawMode,
+            playerCount = setup.playerCount,
+            departureSeconds = setup.departureSeconds,
+            dayDurationMinutes = setup.dayDurationMinutes,
+            round = 1,
+            currentNightColor = null,
+            remainingNightDeck = NightDeck.shuffled(),
+            dayRemainingMillis = setup.dayDurationMinutes * 60_000L,
+        )
+        repository.save(session)
+        _uiState.value = _uiState.value.copy(
+            session = session,
+            hasSavedGame = true,
+            statusMessage = null,
+        )
+        loadSequenceFor(session, autoplay = true)
+    }
+
+    fun resumeSavedGame() {
+        val saved = repository.load()?.takeIf { it.isResumable } ?: return
+        stopAllPlayback()
+        _uiState.value = _uiState.value.copy(
+            session = saved,
+            setup = SetupOptions(
+                playerCount = saved.playerCount,
+                mode = saved.mode,
+                drawMode = saved.drawMode,
+                departureSeconds = saved.departureSeconds,
+                dayDurationMinutes = saved.dayDurationMinutes,
+            ),
+            hasSavedGame = true,
+            statusMessage = "Partie restaurée. Appuyez sur Lecture pour reprendre.",
+        )
+        if (saved.screen == GameScreen.INTRO || saved.screen == GameScreen.NIGHT) {
+            loadSequenceFor(saved, autoplay = false)
+        }
+    }
+
+    fun launchFirstNight() {
+        val session = _uiState.value.session.copy(
+            screen = GameScreen.NIGHT,
+            cueIndex = 0,
+            cueRemainingMillis = 0L,
+        )
+        repository.save(session)
+        _uiState.value = _uiState.value.copy(
+            session = session,
+            isSequenceComplete = false,
+            statusMessage = null,
+        )
+        loadSequenceFor(session, autoplay = true)
+    }
+
+    fun toggleSequencePlayback() {
+        if (_uiState.value.isSequenceComplete) return
+        if (_uiState.value.isSequencePlaying) {
+            pauseSequence()
+        } else {
+            playCurrentCue()
+        }
+    }
+
+    fun replayCurrentCue() {
+        val cue = _uiState.value.currentCue ?: return
+        stopSequenceClock()
+        audioEngine.stop()
+        updateSessionPlayback(
+            cueIndex = _uiState.value.session.cueIndex,
+            remainingMillis = cue.fallbackDurationMillis,
+        )
+        playCurrentCue(reset = true)
+    }
+
+    fun skipCurrentCue() {
+        val cue = _uiState.value.currentCue ?: return
+        if (!cue.skippable) return
+        advanceCue()
+    }
+
+    fun pauseForStopDialog() {
+        pauseSequence()
+        if (_uiState.value.dayTimerPlaying) {
+            dayTimerJob?.cancel()
+            dayTimerJob = null
+            _uiState.value = _uiState.value.copy(dayTimerPlaying = false)
+            repository.save(_uiState.value.session)
+        }
+        stopStandalone()
+    }
+
+    fun pauseAndReturnHome() {
+        pauseSequence()
+        dayTimerJob?.cancel()
+        dayTimerJob = null
+        repository.save(_uiState.value.session)
+        _uiState.value = _uiState.value.copy(
+            session = _uiState.value.session.copy(screen = GameScreen.HOME),
+            hasSavedGame = true,
+            currentCue = null,
+            isSequencePlaying = false,
+            statusMessage = null,
+        )
+    }
+
+    fun discardAndReturnHome() {
+        stopAllPlayback()
+        repository.clear()
+        _uiState.value = GameUiState(
+            hasSavedGame = false,
+            audioRoute = _uiState.value.audioRoute,
+            setup = _uiState.value.setup,
+        )
+    }
+
+    fun startOrPauseDayTimer() {
+        val state = _uiState.value
+        if (state.session.dayDurationMinutes == 0) return
+        if (state.dayTimerPlaying) {
+            dayTimerJob?.cancel()
+            dayTimerJob = null
+            _uiState.value = state.copy(dayTimerPlaying = false)
+            repository.save(state.session)
+        } else {
+            startDayTimer()
+        }
+    }
+
+    fun resetDayTimer() {
+        dayTimerJob?.cancel()
+        dayTimerJob = null
+        val duration = _uiState.value.session.dayDurationMinutes * 60_000L
+        val session = _uiState.value.session.copy(dayRemainingMillis = duration)
+        repository.save(session)
+        _uiState.value = _uiState.value.copy(
+            session = session,
+            dayTimerPlaying = false,
+        )
+    }
+
+    fun advanceDayStage() {
+        val current = _uiState.value.session
+        val next = when (current.dayStage) {
+            DayStage.DISCUSSION -> DayStage.COUNCIL
+            DayStage.COUNCIL -> DayStage.HEALING
+            DayStage.HEALING -> return
+        }
+        dayTimerJob?.cancel()
+        dayTimerJob = null
+        val session = current.copy(dayStage = next)
+        repository.save(session)
+        _uiState.value = _uiState.value.copy(
+            session = session,
+            dayTimerPlaying = false,
+        )
+        playStandalone(
+            GameSequenceFactory.dayCue(
+                if (next == DayStage.COUNCIL) "council" else "healing",
+            ),
+        )
+    }
+
+    fun continueAfterHealing() {
+        stopAllPlayback()
+        val session = _uiState.value.session.copy(
+            screen = GameScreen.DRAW,
+            nextNightColor = null,
+            cueIndex = 0,
+            cueRemainingMillis = 0L,
+        )
+        repository.save(session)
+        _uiState.value = _uiState.value.copy(
+            session = session,
+            statusMessage = null,
+            standaloneCueId = null,
+        )
+    }
+
+    fun drawAutomaticNight() {
+        val current = _uiState.value.session
+        if (current.remainingNightDeck.isEmpty()) {
+            _uiState.value = _uiState.value.copy(
+                statusMessage = "Les huit cartes Nuit ont été utilisées. Remélangez le paquet.",
+            )
+            return
+        }
+        val (color, remaining) = NightDeck.draw(current.remainingNightDeck)
+        val resolved = color ?: return
+        val session = current.copy(
+            nextNightColor = resolved,
+            remainingNightDeck = remaining,
+        )
+        repository.save(session)
+        _uiState.value = _uiState.value.copy(session = session, statusMessage = null)
+        playStandalone(colorAnnouncement(resolved))
+    }
+
+    fun choosePhysicalNight(color: NightColor) {
+        val current = _uiState.value.session
+        val session = current.copy(
+            nextNightColor = color,
+            remainingNightDeck = NightDeck.removePhysicalDraw(
+                current.remainingNightDeck,
+                color,
+            ),
+        )
+        repository.save(session)
+        _uiState.value = _uiState.value.copy(session = session, statusMessage = null)
+        playStandalone(colorAnnouncement(color))
+    }
+
+    fun reshuffleNightDeck() {
+        val session = _uiState.value.session.copy(
+            remainingNightDeck = NightDeck.shuffled(),
+            nextNightColor = null,
+        )
+        repository.save(session)
+        _uiState.value = _uiState.value.copy(
+            session = session,
+            statusMessage = "Le paquet Nuit a été remélangé.",
+        )
+    }
+
+    fun startNextNight() {
+        val current = _uiState.value.session
+        val color = current.nextNightColor ?: return
+        stopAllPlayback()
+        val session = current.copy(
+            screen = GameScreen.NIGHT,
+            round = current.round + 1,
+            currentNightColor = color,
+            nextNightColor = null,
+            cueIndex = 0,
+            cueRemainingMillis = 0L,
+            dayStage = DayStage.DISCUSSION,
+        )
+        repository.save(session)
+        _uiState.value = _uiState.value.copy(
+            session = session,
+            isSequenceComplete = false,
+            statusMessage = null,
+            standaloneCueId = null,
+        )
+        loadSequenceFor(session, autoplay = true)
+    }
+
+    fun finishGame(reason: EndReason) {
+        stopAllPlayback()
+        val session = _uiState.value.session.copy(
+            screen = GameScreen.END,
+            endReason = reason,
+        )
+        repository.save(session)
+        _uiState.value = _uiState.value.copy(
+            session = session,
+            hasSavedGame = false,
+            statusMessage = null,
+        )
+        val cue = when (reason) {
+            EndReason.BLOOD_WOLF_FOUND -> GameSequenceFactory.endCue("blood_wolf_found")
+            EndReason.PACK_CALL_SUCCESS -> GameSequenceFactory.endCue("pack_success")
+            EndReason.PACK_CALL_FAILURE -> GameSequenceFactory.endCue("pack_failure")
+            EndReason.ABANDONED -> null
+        }
+        cue?.let(::playStandalone)
+    }
+
+    fun openHelp() {
+        stopAllPlayback()
+        _uiState.value = _uiState.value.copy(
+            session = _uiState.value.session.copy(screen = GameScreen.HELP),
+            statusMessage = null,
+        )
+    }
+
+    fun returnToHome() {
+        stopAllPlayback()
+        _uiState.value = _uiState.value.copy(
+            session = _uiState.value.session.copy(screen = GameScreen.HOME),
+            standaloneCueId = null,
+            statusMessage = null,
+            hasSavedGame = repository.hasResumableSession(),
+        )
+    }
+
+    fun closeHelp() = returnToHome()
+
+    fun playHelp(cue: GameCue) {
+        playStandalone(cue)
+    }
+
+    fun stopStandalone() {
+        standaloneJob?.cancel()
+        standaloneJob = null
+        audioEngine.stop()
+        _uiState.value = _uiState.value.copy(standaloneCueId = null)
+    }
+
+    fun testSpeaker() {
+        audioEngine.testSpeaker()
+        _uiState.value = _uiState.value.copy(
+            statusMessage = "Son test envoyé vers la sortie audio active.",
+        )
+    }
+
+    fun openBluetoothSettings() {
+        val intent = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        getApplication<Application>().startActivity(intent)
+    }
+
+    fun clearStatusMessage() {
+        _uiState.value = _uiState.value.copy(statusMessage = null)
+    }
+
+    fun isAudioAvailable(cue: GameCue): Boolean =
+        audioEngine.hasResource(cue.audioResource)
+
+    private fun loadSequenceFor(session: GameSession, autoplay: Boolean) {
+        activeSequence = when (session.screen) {
+            GameScreen.INTRO -> GameSequenceFactory.intro(session.mode)
+            GameScreen.NIGHT -> GameSequenceFactory.night(
+                round = session.round,
+                color = session.currentNightColor,
+                mode = session.mode,
+                departureSeconds = session.departureSeconds,
+            )
+            else -> emptyList()
+        }
+        if (activeSequence.isEmpty()) return
+        if (session.cueIndex >= activeSequence.size) {
+            _uiState.value = _uiState.value.copy(
+                session = session.copy(cueRemainingMillis = 0L),
+                currentCue = activeSequence.lastOrNull(),
+                cueTotalMillis = 0L,
+                cueRemainingMillis = 0L,
+                isSequencePlaying = false,
+                isSequenceComplete = true,
+                currentCueHasAudio = false,
+            )
+            return
+        }
+        val safeIndex = session.cueIndex.coerceIn(0, activeSequence.lastIndex)
+        val cue = activeSequence[safeIndex]
+        val remaining = session.cueRemainingMillis
+            .takeIf { it > 0L }
+            ?.coerceAtMost(cue.fallbackDurationMillis)
+            ?: cue.fallbackDurationMillis
+        val normalized = session.copy(
+            cueIndex = safeIndex,
+            cueRemainingMillis = remaining,
+        )
+        _uiState.value = _uiState.value.copy(
+            session = normalized,
+            currentCue = cue,
+            cueTotalMillis = cue.fallbackDurationMillis,
+            cueRemainingMillis = remaining,
+            isSequencePlaying = false,
+            isSequenceComplete = false,
+            currentCueHasAudio = audioEngine.hasResource(cue.audioResource),
+        )
+        if (autoplay) playCurrentCue()
+    }
+
+    private fun playCurrentCue(reset: Boolean = false) {
+        val state = _uiState.value
+        val cue = state.currentCue ?: return
+        sequenceJob?.cancel()
+        val requestedRemaining = if (reset) {
+            cue.fallbackDurationMillis
+        } else {
+            state.cueRemainingMillis.takeIf { it > 0L } ?: cue.fallbackDurationMillis
+        }
+        val fallbackTotal = cue.fallbackDurationMillis
+        val fallbackElapsed = (fallbackTotal - requestedRemaining).coerceAtLeast(0L)
+        val playback = audioEngine.play(
+            resourceName = cue.audioResource,
+            looping = cue.loopAudio,
+            seekMillis = fallbackElapsed,
+        )
+        val total = when {
+            cue.kind == CueKind.TIMER -> fallbackTotal
+            playback.available && playback.durationMillis > 0L -> playback.durationMillis
+            else -> fallbackTotal.coerceAtMost(5_000L)
+        }
+        val remaining = if (reset || state.cueRemainingMillis <= 0L) {
+            total
+        } else {
+            requestedRemaining.coerceAtMost(total)
+        }
+        updateSessionPlayback(state.session.cueIndex, remaining)
+        _uiState.value = _uiState.value.copy(
+            cueTotalMillis = total,
+            cueRemainingMillis = remaining,
+            isSequencePlaying = true,
+            currentCueHasAudio = playback.available,
+            statusMessage = if (playback.available) {
+                null
+            } else {
+                "Audio « ${cue.audioResource}.mp3 » à fournir : minuterie silencieuse active."
+            },
+        )
+        startSequenceClock()
+    }
+
+    private fun startSequenceClock() {
+        sequenceJob?.cancel()
+        lastPersistedSecond = -1L
+        sequenceJob = viewModelScope.launch {
+            var previousTick = SystemClock.elapsedRealtime()
+            while (_uiState.value.isSequencePlaying) {
+                delay(100L)
+                val now = SystemClock.elapsedRealtime()
+                val elapsed = now - previousTick
+                previousTick = now
+                val nextRemaining = (_uiState.value.cueRemainingMillis - elapsed)
+                    .coerceAtLeast(0L)
+                val session = _uiState.value.session.copy(
+                    cueRemainingMillis = nextRemaining,
+                )
+                _uiState.value = _uiState.value.copy(
+                    session = session,
+                    cueRemainingMillis = nextRemaining,
+                )
+                val second = nextRemaining / 1_000L
+                if (second != lastPersistedSecond) {
+                    lastPersistedSecond = second
+                    repository.save(session)
+                }
+                if (nextRemaining == 0L) {
+                    advanceCue()
+                    break
+                }
+            }
+        }
+    }
+
+    private fun advanceCue() {
+        stopSequenceClock()
+        audioEngine.stop()
+        val nextIndex = _uiState.value.session.cueIndex + 1
+        if (nextIndex > activeSequence.lastIndex) {
+            completeSequence()
+            return
+        }
+        val cue = activeSequence[nextIndex]
+        val session = _uiState.value.session.copy(
+            cueIndex = nextIndex,
+            cueRemainingMillis = cue.fallbackDurationMillis,
+        )
+        repository.save(session)
+        _uiState.value = _uiState.value.copy(
+            session = session,
+            currentCue = cue,
+            cueTotalMillis = cue.fallbackDurationMillis,
+            cueRemainingMillis = cue.fallbackDurationMillis,
+            isSequencePlaying = false,
+            currentCueHasAudio = audioEngine.hasResource(cue.audioResource),
+        )
+        playCurrentCue(reset = true)
+    }
+
+    private fun completeSequence() {
+        stopSequenceClock()
+        audioEngine.stop()
+        when (_uiState.value.session.screen) {
+            GameScreen.INTRO -> {
+                val session = _uiState.value.session.copy(
+                    cueIndex = activeSequence.size,
+                    cueRemainingMillis = 0L,
+                )
+                repository.save(session)
+                _uiState.value = _uiState.value.copy(
+                    session = session,
+                    isSequencePlaying = false,
+                    isSequenceComplete = true,
+                    cueRemainingMillis = 0L,
+                    statusMessage = null,
+                )
+            }
+            GameScreen.NIGHT -> enterDay()
+            else -> Unit
+        }
+    }
+
+    private fun enterDay() {
+        val current = _uiState.value.session
+        val duration = current.dayDurationMinutes * 60_000L
+        val session = current.copy(
+            screen = GameScreen.DAY,
+            dayStage = DayStage.DISCUSSION,
+            dayRemainingMillis = duration,
+            cueIndex = 0,
+            cueRemainingMillis = 0L,
+        )
+        repository.save(session)
+        _uiState.value = _uiState.value.copy(
+            session = session,
+            currentCue = null,
+            isSequencePlaying = false,
+            isSequenceComplete = false,
+            dayTimerPlaying = false,
+            statusMessage = null,
+        )
+        playStandalone(GameSequenceFactory.dayCue("discussion"))
+    }
+
+    private fun startDayTimer() {
+        dayTimerJob?.cancel()
+        _uiState.value = _uiState.value.copy(dayTimerPlaying = true)
+        dayTimerJob = viewModelScope.launch {
+            var previousTick = SystemClock.elapsedRealtime()
+            while (_uiState.value.dayTimerPlaying) {
+                delay(250L)
+                val now = SystemClock.elapsedRealtime()
+                val elapsed = now - previousTick
+                previousTick = now
+                val remaining = (_uiState.value.session.dayRemainingMillis - elapsed)
+                    .coerceAtLeast(0L)
+                val session = _uiState.value.session.copy(dayRemainingMillis = remaining)
+                _uiState.value = _uiState.value.copy(session = session)
+                if (remaining % 1_000L < 250L) repository.save(session)
+                if (remaining == 0L) {
+                    _uiState.value = _uiState.value.copy(
+                        dayTimerPlaying = false,
+                        statusMessage = "Le temps de concertation est écoulé.",
+                    )
+                    break
+                }
+            }
+        }
+    }
+
+    private fun pauseSequence(message: String? = null) {
+        if (!_uiState.value.isSequencePlaying) {
+            if (message != null) {
+                _uiState.value = _uiState.value.copy(statusMessage = message)
+            }
+            return
+        }
+        stopSequenceClock()
+        audioEngine.stop()
+        val session = _uiState.value.session.copy(
+            cueRemainingMillis = _uiState.value.cueRemainingMillis,
+        )
+        repository.save(session)
+        _uiState.value = _uiState.value.copy(
+            session = session,
+            isSequencePlaying = false,
+            statusMessage = message,
+        )
+    }
+
+    private fun playStandalone(cue: GameCue) {
+        stopSequenceClock()
+        standaloneJob?.cancel()
+        standaloneJob = null
+        audioEngine.stop()
+        val playback = audioEngine.play(cue.audioResource)
+        _uiState.value = _uiState.value.copy(
+            standaloneCueId = if (playback.available) cue.id else null,
+            statusMessage = if (playback.available) {
+                null
+            } else {
+                "Fichier « ${cue.audioResource}.mp3 » à fournir. Le texte reste affiché."
+            },
+        )
+        if (playback.available) {
+            standaloneJob = viewModelScope.launch {
+                delay(playback.durationMillis.coerceAtLeast(250L))
+                if (_uiState.value.standaloneCueId == cue.id) {
+                    audioEngine.stop()
+                    _uiState.value = _uiState.value.copy(standaloneCueId = null)
+                }
+                standaloneJob = null
+            }
+        }
+    }
+
+    private fun colorAnnouncement(color: NightColor): GameCue =
+        if (color == NightColor.YELLOW) {
+            GameCue(
+                id = "draw_yellow",
+                title = "Nuit jaune",
+                text = "Cette nuit, les goules jaunes vont se réveiller.",
+                audioResource = "jaune_302_annonce_prochaine_nuit_jaune",
+                fallbackDurationMillis = 7_000L,
+            )
+        } else {
+            GameCue(
+                id = "draw_green",
+                title = "Nuit verte",
+                text = "Cette nuit, les goules vertes vont se réveiller.",
+                audioResource = "vert_302_annonce_prochaine_nuit_verte",
+                fallbackDurationMillis = 7_000L,
+            )
+        }
+
+    private fun updateSessionPlayback(cueIndex: Int, remainingMillis: Long) {
+        val session = _uiState.value.session.copy(
+            cueIndex = cueIndex,
+            cueRemainingMillis = remainingMillis,
+        )
+        _uiState.value = _uiState.value.copy(session = session)
+        repository.save(session)
+    }
+
+    private fun stopSequenceClock() {
+        sequenceJob?.cancel()
+        sequenceJob = null
+    }
+
+    private fun stopAllPlayback() {
+        stopSequenceClock()
+        dayTimerJob?.cancel()
+        dayTimerJob = null
+        standaloneJob?.cancel()
+        standaloneJob = null
+        audioEngine.stop()
+        _uiState.value = _uiState.value.copy(
+            isSequencePlaying = false,
+            dayTimerPlaying = false,
+            standaloneCueId = null,
+        )
+    }
+
+    override fun onCleared() {
+        _uiState.value.session.takeIf { it.isResumable }?.let(repository::save)
+        routeMonitor.stop()
+        audioEngine.release()
+        super.onCleared()
+    }
+}
