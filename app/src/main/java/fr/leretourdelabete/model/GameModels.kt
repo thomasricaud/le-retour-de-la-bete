@@ -52,6 +52,7 @@ data class GameSession(
     val mode: GameMode = GameMode.BEGINNER,
     val drawMode: DrawMode = DrawMode.APPLICATION,
     val playerCount: Int = 6,
+    val packCallVillagerLimit: Int = 2,
     val departureSeconds: Int = 45,
     val dayDurationMinutes: Int = 5,
     val round: Int = 1,

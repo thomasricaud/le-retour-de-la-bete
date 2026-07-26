@@ -52,15 +52,18 @@ non bloquante vérifie uniquement la dernière release GitHub au démarrage.
 - Téléchargement suivi par le gestionnaire Android lorsqu'une release GitHub
   plus récente existe, puis proposition d'ouvrir l'installateur ; sans
   connexion, l'application démarre normalement et n'affiche aucune erreur.
-- Les 43 ressources audio sont intégrées. L'ambiance nocturne tourne en continu
-  pendant toute la nuit et l'ambiance de village diurne, sans voix, pendant tout
-  le jour. Les consignes et effets (notamment le cocorico) sont joués
-  simultanément au premier plan.
+- Le catalogue prévoit 59 ressources audio. L'ambiance nocturne tourne en
+  continu pendant toute la nuit et l'ambiance de village diurne, sans voix,
+  pendant tout le jour. Les consignes et effets (notamment le cocorico) sont
+  joués simultanément au premier plan. Une ressource absente est remplacée par
+  son texte affiché, sans bloquer la partie.
 
-Le catalogue complet des 43 enregistrements intégrés se trouve dans
+Le catalogue complet des 59 enregistrements attendus se trouve dans
 [`docs/AUDIO_ASSETS.md`](docs/AUDIO_ASSETS.md). Le manifeste exploitable par un
 outil de production se trouve dans
 [`app/src/main/assets/audio_manifest.json`](app/src/main/assets/audio_manifest.json).
+Les vingt annonces suffixées `_seuil_1` à `_seuil_5` énoncent directement le
+seuil fixé au lancement de la partie et sont intégrées dans `res/raw`.
 
 ## Régénérer les sons
 
@@ -138,6 +141,9 @@ effectuées. Les conditions complètes figurent dans [`LICENSE`](LICENSE).
 ## Documentation
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) : architecture et états.
+- [`docs/RULES.md`](docs/RULES.md) : évolutions de règle appliquées par
+  l'application.
 - [`docs/AUDIO_ASSETS.md`](docs/AUDIO_ASSETS.md) : textes exacts à enregistrer.
 - [`docs/IMAGE_ASSETS.md`](docs/IMAGE_ASSETS.md) : prompts et chemins des visuels.
-- Les trois PDF d'origine restent la référence des règles.
+- Les trois PDF d'origine restent la référence des règles, complétée par les
+  évolutions consignées dans [`docs/RULES.md`](docs/RULES.md).

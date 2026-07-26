@@ -79,7 +79,8 @@ fun SequenceScreen(
                     AudioRouteBadge(state.audioRoute)
                     if (!isIntro && session.round > 1) {
                         LargeActionButton(
-                            label = "APPEL DE LA MEUTE",
+                            label = "APPEL DE LA MEUTE · ≤ " +
+                                "${session.packCallVillagerLimit} VILLAGEOIS",
                             onClick = { showPackDialog = true },
                             tone = ActionTone.DANGER,
                         )
@@ -155,6 +156,8 @@ fun SequenceScreen(
 
     if (showPackDialog) {
         PackCallDialog(
+            playerCount = session.playerCount,
+            villagerLimit = session.packCallVillagerLimit,
             onDismiss = { showPackDialog = false },
             onSuccess = {
                 showPackDialog = false
@@ -595,6 +598,8 @@ fun EndScreen(
     viewModel: GameViewModel,
 ) {
     val reason = state.session.endReason ?: EndReason.ABANDONED
+    val playerCount = state.session.playerCount
+    val packCallVillagerLimit = state.session.packCallVillagerLimit
     val isDay = reason == EndReason.BLOOD_WOLF_FOUND ||
         reason == EndReason.PACK_CALL_FAILURE
     val title: String
@@ -604,19 +609,21 @@ fun EndScreen(
             title = "La Bête est vaincue"
             text = "Le loup-garou de sang a été découvert pendant la guérison. Les villageois " +
                 "gagnent et tentent maintenant de guérir les loups et les goules."
-            GameSequenceFactory.endCue("blood_wolf_found")
+            GameSequenceFactory.endCue("blood_wolf_found", packCallVillagerLimit)
         }
         EndReason.PACK_CALL_SUCCESS -> {
             title = "La meute triomphe"
-            text = "L'appel était juste : il ne restait au plus qu'un villageois. Le loup-garou " +
-                "de sang et les loups gagnent. Résolvez maintenant le sort des goules."
-            GameSequenceFactory.endCue("pack_success")
+            text = "L'appel était juste : il restait $packCallVillagerLimit villageois ou moins " +
+                "(seuil pour $playerCount joueurs). Le loup-garou de sang et les loups gagnent. " +
+                "Résolvez maintenant le sort des goules."
+            GameSequenceFactory.endCue("pack_success", packCallVillagerLimit)
         }
         EndReason.PACK_CALL_FAILURE -> {
             title = "Le village se soulève"
-            text = "Au moins deux villageois dormaient encore. L'appel était une erreur : le " +
-                "village tue le loup-garou de sang et sa meute."
-            GameSequenceFactory.endCue("pack_failure")
+            text = "Plus de $packCallVillagerLimit villageois dormaient encore " +
+                "(seuil pour $playerCount joueurs). L'appel était une erreur : le village tue " +
+                "le loup-garou de sang et sa meute."
+            GameSequenceFactory.endCue("pack_failure", packCallVillagerLimit)
         }
         EndReason.ABANDONED -> {
             title = "Partie arrêtée"
@@ -711,6 +718,8 @@ private fun StopDialog(
 
 @Composable
 private fun PackCallDialog(
+    playerCount: Int,
+    villagerLimit: Int,
     onDismiss: () -> Unit,
     onSuccess: () -> Unit,
     onFailure: () -> Unit,
@@ -720,13 +729,14 @@ private fun PackCallDialog(
         title = { Text("« Venez à moi, ma meute… »") },
         text = {
             Text(
-                "Toutes les goules rejoignent le conseil. Sans saisir aucun rôle, " +
-                    "indiquez simplement si l'appel était juste.",
+                "Pour $playerCount joueurs, l'appel est juste s'il reste $villagerLimit " +
+                    "villageois ou moins. Toutes les goules rejoignent le conseil. Sans saisir " +
+                    "aucun rôle, indiquez simplement si l'appel était juste.",
             )
         },
         confirmButton = {
             TextButton(onClick = onSuccess) {
-                Text("0 OU 1 VILLAGEOIS")
+                Text("$villagerLimit VILLAGEOIS OU MOINS")
             }
         },
         dismissButton = {
@@ -735,7 +745,7 @@ private fun PackCallDialog(
                     Text("ANNULER")
                 }
                 TextButton(onClick = onFailure) {
-                    Text("AU MOINS 2")
+                    Text("PLUS DE $villagerLimit VILLAGEOIS")
                 }
             }
         },

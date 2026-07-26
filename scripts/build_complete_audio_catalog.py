@@ -34,7 +34,7 @@ def parse_args() -> argparse.Namespace:
     project_root = Path(__file__).resolve().parents[1]
     bundled_ffmpeg = Path(imageio_ffmpeg.get_ffmpeg_exe())
     parser = argparse.ArgumentParser(
-        description="Génère les voix manquantes et assemble les 43 pistes candidates.",
+        description="Génère les voix manquantes et assemble le catalogue du manifeste.",
     )
     parser.add_argument("--project-root", type=Path, default=project_root)
     parser.add_argument(

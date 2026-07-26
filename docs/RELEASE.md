@@ -36,8 +36,9 @@ directement la release la plus récente, même si plusieurs versions
 intermédiaires ont été ignorées.
 
 Lors d'une publication, le workflow injecte automatiquement le numéro du tag
-dans l'APK. Il ne faut donc pas modifier manuellement `versionName` ou
-`versionCode` avant chaque release. Pour conserver un ordre strict des
+dans l'APK. Les valeurs par défaut de `versionName` et `versionCode` peuvent
+être alignées dans le commit de release pour les builds locaux, mais le tag
+reste la source d'autorité de l'APK publié. Pour conserver un ordre strict des
 `versionCode`, les composantes MINEUR et CORRECTIF doivent rester comprises
 entre 0 et 999.
 

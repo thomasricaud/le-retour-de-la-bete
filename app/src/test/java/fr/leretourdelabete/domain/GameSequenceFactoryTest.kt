@@ -15,6 +15,7 @@ class GameSequenceFactoryTest {
             color = null,
             mode = GameMode.BEGINNER,
             departureSeconds = 45,
+            packCallVillagerLimit = 2,
         )
 
         assertTrue(cues.any { it.id == "night_first_wake" })
@@ -30,12 +31,14 @@ class GameSequenceFactoryTest {
             color = NightColor.YELLOW,
             mode = GameMode.CONFIRMED,
             departureSeconds = 45,
+            packCallVillagerLimit = 2,
         )
         val green = GameSequenceFactory.night(
             round = 2,
             color = NightColor.GREEN,
             mode = GameMode.CONFIRMED,
             departureSeconds = 45,
+            packCallVillagerLimit = 2,
         )
 
         assertTrue(yellow.any { it.audioResource == "jaune_303_reveil_meute_jaune" })
@@ -51,12 +54,14 @@ class GameSequenceFactoryTest {
             color = NightColor.GREEN,
             mode = GameMode.BEGINNER,
             departureSeconds = 45,
+            packCallVillagerLimit = 2,
         )
         val confirmed = GameSequenceFactory.night(
             round = 3,
             color = NightColor.GREEN,
             mode = GameMode.CONFIRMED,
             departureSeconds = 45,
+            packCallVillagerLimit = 2,
         )
 
         assertTrue(beginner.size > confirmed.size)
@@ -71,12 +76,14 @@ class GameSequenceFactoryTest {
             color = null,
             mode = GameMode.CONFIRMED,
             departureSeconds = 30,
+            packCallVillagerLimit = 2,
         )
         val long = GameSequenceFactory.night(
             round = 1,
             color = null,
             mode = GameMode.CONFIRMED,
             departureSeconds = 45,
+            packCallVillagerLimit = 2,
         )
 
         assertEquals(
@@ -104,6 +111,39 @@ class GameSequenceFactoryTest {
             color = null,
             mode = GameMode.CONFIRMED,
             departureSeconds = 45,
+            packCallVillagerLimit = 2,
         )
+    }
+
+    @Test
+    fun `beginner pack call cue uses the configured player threshold`() {
+        val cues = GameSequenceFactory.night(
+            round = 2,
+            color = NightColor.YELLOW,
+            mode = GameMode.BEGINNER,
+            departureSeconds = 45,
+            packCallVillagerLimit = 3,
+        )
+
+        val packCallCue = cues.first { it.id == "council_end_option" }
+        assertTrue("3 villageois ou moins" in packCallCue.text)
+        assertEquals(
+            "debutant_111_option_fin_partie_seuil_3",
+            packCallCue.audioResource,
+        )
+    }
+
+    @Test
+    fun `help and ending cues speak the stored threshold`() {
+        val helpCue = GameSequenceFactory.helpCues(4).first { it.id == "help_end" }
+        val successCue = GameSequenceFactory.endCue("pack_success", 4)
+        val failureCue = GameSequenceFactory.endCue("pack_failure", 4)
+
+        assertTrue("4 villageois ou moins" in helpCue.text)
+        assertEquals("aides_441_appel_de_la_meute_seuil_4", helpCue.audioResource)
+        assertTrue("4 villageois ou moins" in successCue.text)
+        assertEquals("aides_442_fin_b1_seuil_4", successCue.audioResource)
+        assertTrue("plus de 4 villageois" in failureCue.text)
+        assertEquals("aides_443_fin_b2_seuil_4", failureCue.audioResource)
     }
 }

@@ -22,6 +22,7 @@ import fr.leretourdelabete.domain.CueKind
 import fr.leretourdelabete.domain.GameCue
 import fr.leretourdelabete.domain.GameSequenceFactory
 import fr.leretourdelabete.domain.NightDeck
+import fr.leretourdelabete.domain.PackCallRule
 import fr.leretourdelabete.model.DayStage
 import fr.leretourdelabete.model.DrawMode
 import fr.leretourdelabete.model.EndReason
@@ -133,6 +134,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             mode = setup.mode,
             drawMode = setup.drawMode,
             playerCount = setup.playerCount,
+            packCallVillagerLimit = PackCallRule.maxRemainingVillagers(setup.playerCount),
             departureSeconds = setup.departureSeconds,
             dayDurationMinutes = setup.dayDurationMinutes,
             round = 1,
@@ -398,9 +400,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             statusMessage = null,
         )
         val cue = when (reason) {
-            EndReason.BLOOD_WOLF_FOUND -> GameSequenceFactory.endCue("blood_wolf_found")
-            EndReason.PACK_CALL_SUCCESS -> GameSequenceFactory.endCue("pack_success")
-            EndReason.PACK_CALL_FAILURE -> GameSequenceFactory.endCue("pack_failure")
+            EndReason.BLOOD_WOLF_FOUND -> GameSequenceFactory.endCue(
+                "blood_wolf_found",
+                session.packCallVillagerLimit,
+            )
+            EndReason.PACK_CALL_SUCCESS -> GameSequenceFactory.endCue(
+                "pack_success",
+                session.packCallVillagerLimit,
+            )
+            EndReason.PACK_CALL_FAILURE -> GameSequenceFactory.endCue(
+                "pack_failure",
+                session.packCallVillagerLimit,
+            )
             EndReason.ABANDONED -> null
         }
         cue?.let(::playStandalone)
@@ -536,6 +547,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 color = session.currentNightColor,
                 mode = session.mode,
                 departureSeconds = session.departureSeconds,
+                packCallVillagerLimit = session.packCallVillagerLimit,
             )
             else -> emptyList()
         }

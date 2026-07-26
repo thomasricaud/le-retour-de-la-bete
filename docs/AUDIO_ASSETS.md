@@ -1,18 +1,19 @@
 # Ressources audio
 
-Ce document est le contrat de production et d'intégration des 43 ressources audio
+Ce document est le contrat de production et d'intégration des 59 ressources audio
 référencées par `GameSequence.kt` et `GameViewModel.kt`.
 
-Les 43 fichiers audio sont fournis dans le dépôt. Les textes ci-dessous sont les
-textes français exacts utilisés pour les voix. Ne pas ajouter à l'enregistrement
-les indications de production signalées comme non parlées.
+Les 59 fichiers audio du manifeste sont fournis dans le dépôt. Les textes
+ci-dessous sont les textes français exacts utilisés pour les voix. Ne pas
+ajouter à l'enregistrement les indications de production signalées comme non
+parlées.
 
 ## État d'intégration
 
-Les 43 entrées du manifeste ont exactement un MP3 correspondant dans
-`app/src/main/res/raw/`. Les 36 nouvelles voix utilisent
-`fr-FR-RemyMultilingualNeural`, conformément à la validation, et les six
-montages locaux précédemment retenus sont conservés.
+Les 59 entrées du manifeste ont exactement un MP3 correspondant dans
+`app/src/main/res/raw/`. Les voix utilisent `fr-FR-RemyMultilingualNeural`,
+conformément à la validation, et les six montages locaux précédemment retenus
+sont conservés.
 
 L'ambiance de jour validée représente une place de village détendue avec des
 oiseaux, une fontaine, des pas et de petits bruits d'activité. Elle ne contient
@@ -225,13 +226,21 @@ rédaction de ce document.
 
 > Au conseil des loups, chacun montre sa pierre pour se faire identifier. Le loup garou de sang montre sa pierre rouge. Les loups garous montrent leur pierre violette. Les goules présentes montrent la pierre de leur couleur.
 
-#### `debutant_111_option_fin_partie.mp3`
+#### Variantes `debutant_111_option_fin_partie_seuil_1.mp3` à `_seuil_5.mp3`
 
 - Type : voix.
 - Durée moteur : 15 secondes.
-- Texte exact :
+- Une seule variante est sélectionnée pour toute la partie d'après le seuil
+  calculé au lancement.
+- Textes exacts :
 
-> Si le loup garou de sang estime qu'il ne reste pas plus d'un villageois, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue.
+| Seuil | Texte |
+|---:|---|
+| 1 | Le seuil de cette partie est d'un villageois. Si le loup garou de sang estime qu'il reste un villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue. |
+| 2 | Le seuil de cette partie est de deux villageois. Si le loup garou de sang estime qu'il reste deux villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue. |
+| 3 | Le seuil de cette partie est de trois villageois. Si le loup garou de sang estime qu'il reste trois villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue. |
+| 4 | Le seuil de cette partie est de quatre villageois. Si le loup garou de sang estime qu'il reste quatre villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue. |
+| 5 | Le seuil de cette partie est de cinq villageois. Si le loup garou de sang estime qu'il reste cinq villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue. |
 
 #### `debutant_112_transfert_de_sang.mp3`
 
@@ -390,29 +399,47 @@ rendormissement, cocorico et réveil du village.
 
 > Fin de partie A. Le joueur choisi pour la guérison est le loup garou de sang. Les villageois tuent la bête. Tous les joueurs encore villageois gagnent. Le loup garou de sang perd. Les villageois tentent maintenant de guérir tous les loups garous et toutes les goules. Chaque loup garou remet sa pierre violette dans la boîte des loups. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison. Chacun tire ensuite une dernière pierre dans le sac. Une pierre bleue signifie qu'il gagne avec les villageois. Une pierre jaune ou verte signifie qu'il perd avec le loup garou de sang.
 
-#### `aides_441_appel_de_la_meute.mp3`
+#### Variantes `aides_441_appel_de_la_meute_seuil_1.mp3` à `_seuil_5.mp3`
 
 - Type : voix.
 - Durée moteur : 45 secondes.
-- Texte exact :
+- Textes exacts :
 
-> Si le loup garou de sang estime qu'il ne reste pas plus d'un villageois, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Vérifiez si tous les joueurs sont présents, ou si un seul joueur dort encore.
+| Seuil | Texte |
+|---:|---|
+| 1 | Le seuil de cette partie est d'un villageois. Si le loup garou de sang estime qu'il reste un villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil d'un. |
+| 2 | Le seuil de cette partie est de deux villageois. Si le loup garou de sang estime qu'il reste deux villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil de deux. |
+| 3 | Le seuil de cette partie est de trois villageois. Si le loup garou de sang estime qu'il reste trois villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil de trois. |
+| 4 | Le seuil de cette partie est de quatre villageois. Si le loup garou de sang estime qu'il reste quatre villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil de quatre. |
+| 5 | Le seuil de cette partie est de cinq villageois. Si le loup garou de sang estime qu'il reste cinq villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil de cinq. |
 
-#### `aides_442_fin_b1.mp3`
+#### Variantes `aides_442_fin_b1_seuil_1.mp3` à `_seuil_5.mp3`
 
 - Type : voix.
 - Durée moteur : 55 secondes.
-- Texte exact :
+- Textes exacts :
 
-> Fin de partie B un. Tous les joueurs sont au conseil des loups, ou tous sauf un. L'appel du loup garou de sang était juste. Les loups garous tuent l'éventuel dernier villageois. Le loup garou de sang et les loups garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd.
+| Seuil | Texte |
+|---:|---|
+| 1 | Fin de partie B un. Le seuil de cette partie était d'un villageois et il n'est pas dépassé. L'appel du loup garou de sang était juste. Les loups garous tuent les derniers villageois. Le loup garou de sang et les loups garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd. |
+| 2 | Fin de partie B un. Le seuil de cette partie était de deux villageois et il n'est pas dépassé. L'appel du loup garou de sang était juste. Les loups garous tuent les derniers villageois. Le loup garou de sang et les loups garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd. |
+| 3 | Fin de partie B un. Le seuil de cette partie était de trois villageois et il n'est pas dépassé. L'appel du loup garou de sang était juste. Les loups garous tuent les derniers villageois. Le loup garou de sang et les loups garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd. |
+| 4 | Fin de partie B un. Le seuil de cette partie était de quatre villageois et il n'est pas dépassé. L'appel du loup garou de sang était juste. Les loups garous tuent les derniers villageois. Le loup garou de sang et les loups garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd. |
+| 5 | Fin de partie B un. Le seuil de cette partie était de cinq villageois et il n'est pas dépassé. L'appel du loup garou de sang était juste. Les loups garous tuent les derniers villageois. Le loup garou de sang et les loups garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd. |
 
-#### `aides_443_fin_b2.mp3`
+#### Variantes `aides_443_fin_b2_seuil_1.mp3` à `_seuil_5.mp3`
 
 - Type : voix.
 - Durée moteur : 60 secondes.
-- Texte exact :
+- Textes exacts :
 
-> Fin de partie B deux. Au moins deux villageois dormaient encore. Le loup garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup garou de sang et les loups garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups garous.
+| Seuil | Texte |
+|---:|---|
+| 1 | Fin de partie B deux. Le seuil de cette partie était d'un villageois et il est dépassé. Le loup garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup garou de sang et les loups garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups garous. |
+| 2 | Fin de partie B deux. Le seuil de cette partie était de deux villageois et il est dépassé. Le loup garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup garou de sang et les loups garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups garous. |
+| 3 | Fin de partie B deux. Le seuil de cette partie était de trois villageois et il est dépassé. Le loup garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup garou de sang et les loups garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups garous. |
+| 4 | Fin de partie B deux. Le seuil de cette partie était de quatre villageois et il est dépassé. Le loup garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup garou de sang et les loups garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups garous. |
+| 5 | Fin de partie B deux. Le seuil de cette partie était de cinq villageois et il est dépassé. Le loup garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup garou de sang et les loups garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups garous. |
 
 #### `aides_450_preparation.mp3`
 

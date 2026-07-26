@@ -9,7 +9,8 @@ gérer physiquement leurs pierres, leurs déplacements et leurs rôles secrets.
 L'application persiste uniquement des données techniques :
 
 - mode débutant ou confirmé ;
-- nombre de joueurs pour la liste du matériel ;
+- nombre de joueurs pour la liste du matériel et seuil de l'appel de la meute,
+  calculé une fois au lancement ;
 - mode de tirage et cartes Nuit restantes ;
 - numéro du tour, couleur courante et couleur suivante ;
 - écran, étape et temps restant ;

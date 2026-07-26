@@ -39,6 +39,7 @@ import fr.leretourdelabete.GameViewModel
 import fr.leretourdelabete.BuildConfig
 import fr.leretourdelabete.R
 import fr.leretourdelabete.domain.GameSequenceFactory
+import fr.leretourdelabete.domain.PackCallRule
 import fr.leretourdelabete.model.DrawMode
 import fr.leretourdelabete.model.GameMode
 import fr.leretourdelabete.model.GameScreen
@@ -451,7 +452,7 @@ private fun HelpScreen(
     viewModel: GameViewModel,
     onBack: () -> Unit,
 ) {
-    val cues = GameSequenceFactory.helpCues()
+    val cues = GameSequenceFactory.helpCues(state.session.packCallVillagerLimit)
     GameBackdrop {
         Column(
             modifier = Modifier
@@ -554,11 +555,16 @@ private fun MaterialSummary(playerCount: Int) {
     val secondary = playerCount - 1
     val yellow = (secondary + 1) / 2
     val green = secondary / 2
+    val packCallVillagerLimit = PackCallRule.maxRemainingVillagers(playerCount)
     Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
         Text("Matériel pour $playerCount joueurs", style = MaterialTheme.typography.titleLarge)
         InlineLabelValue("Tirage des rôles", "1 rouge + $secondary bleues")
         InlineLabelValue("Sac + goules", "$secondary bleues · $yellow jaunes · $green vertes")
         InlineLabelValue("Loups + Nuits", "$playerCount violettes · 4 jaunes · 4 vertes")
+        InlineLabelValue(
+            "Seuil « Venez à moi… »",
+            "$packCallVillagerLimit villageois ou moins",
+        )
         Text(
             "Aucun nom ni rôle n'est saisi dans l'application.",
             color = Parchment.copy(alpha = 0.85f),

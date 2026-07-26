@@ -4,7 +4,7 @@
   "resource_directory": "app/src/main/res/raw",
   "file_extension": ".mp3",
   "flat_android_raw_directory": true,
-  "asset_count": 43,
+  "asset_count": 59,
   "timing_contract": {
     "departure_options_ms": [
       30000,
@@ -197,13 +197,49 @@
       "spoken_text": "Au conseil des loups, chacun montre sa pierre pour se faire identifier. Le loup garou de sang montre sa pierre rouge. Les loups garous montrent leur pierre violette. Les goules présentes montrent la pierre de leur couleur."
     },
     {
-      "basename": "debutant_111_option_fin_partie",
-      "filename": "debutant_111_option_fin_partie.mp3",
+      "basename": "debutant_111_option_fin_partie_seuil_1",
+      "filename": "debutant_111_option_fin_partie_seuil_1.mp3",
       "category": "debutant",
       "kind": "voice",
       "motor_durations_ms": [15000],
       "loop": false,
-      "spoken_text": "Si le loup garou de sang estime qu'il ne reste pas plus d'un villageois, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue."
+      "spoken_text": "Le seuil de cette partie est d'un villageois. Si le loup garou de sang estime qu'il reste un villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue."
+    },
+    {
+      "basename": "debutant_111_option_fin_partie_seuil_2",
+      "filename": "debutant_111_option_fin_partie_seuil_2.mp3",
+      "category": "debutant",
+      "kind": "voice",
+      "motor_durations_ms": [15000],
+      "loop": false,
+      "spoken_text": "Le seuil de cette partie est de deux villageois. Si le loup garou de sang estime qu'il reste deux villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue."
+    },
+    {
+      "basename": "debutant_111_option_fin_partie_seuil_3",
+      "filename": "debutant_111_option_fin_partie_seuil_3.mp3",
+      "category": "debutant",
+      "kind": "voice",
+      "motor_durations_ms": [15000],
+      "loop": false,
+      "spoken_text": "Le seuil de cette partie est de trois villageois. Si le loup garou de sang estime qu'il reste trois villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue."
+    },
+    {
+      "basename": "debutant_111_option_fin_partie_seuil_4",
+      "filename": "debutant_111_option_fin_partie_seuil_4.mp3",
+      "category": "debutant",
+      "kind": "voice",
+      "motor_durations_ms": [15000],
+      "loop": false,
+      "spoken_text": "Le seuil de cette partie est de quatre villageois. Si le loup garou de sang estime qu'il reste quatre villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue."
+    },
+    {
+      "basename": "debutant_111_option_fin_partie_seuil_5",
+      "filename": "debutant_111_option_fin_partie_seuil_5.mp3",
+      "category": "debutant",
+      "kind": "voice",
+      "motor_durations_ms": [15000],
+      "loop": false,
+      "spoken_text": "Le seuil de cette partie est de cinq villageois. Si le loup garou de sang estime qu'il reste cinq villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue."
     },
     {
       "basename": "debutant_112_transfert_de_sang",
@@ -368,31 +404,139 @@
       "spoken_text": "Fin de partie A. Le joueur choisi pour la guérison est le loup garou de sang. Les villageois tuent la bête. Tous les joueurs encore villageois gagnent. Le loup garou de sang perd. Les villageois tentent maintenant de guérir tous les loups garous et toutes les goules. Chaque loup garou remet sa pierre violette dans la boîte des loups. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison. Chacun tire ensuite une dernière pierre dans le sac. Une pierre bleue signifie qu'il gagne avec les villageois. Une pierre jaune ou verte signifie qu'il perd avec le loup garou de sang."
     },
     {
-      "basename": "aides_441_appel_de_la_meute",
-      "filename": "aides_441_appel_de_la_meute.mp3",
+      "basename": "aides_441_appel_de_la_meute_seuil_1",
+      "filename": "aides_441_appel_de_la_meute_seuil_1.mp3",
       "category": "aides",
       "kind": "voice",
       "motor_durations_ms": [45000],
       "loop": false,
-      "spoken_text": "Si le loup garou de sang estime qu'il ne reste pas plus d'un villageois, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Vérifiez si tous les joueurs sont présents, ou si un seul joueur dort encore."
+      "spoken_text": "Le seuil de cette partie est d'un villageois. Si le loup garou de sang estime qu'il reste un villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil d'un."
     },
     {
-      "basename": "aides_442_fin_b1",
-      "filename": "aides_442_fin_b1.mp3",
+      "basename": "aides_441_appel_de_la_meute_seuil_2",
+      "filename": "aides_441_appel_de_la_meute_seuil_2.mp3",
+      "category": "aides",
+      "kind": "voice",
+      "motor_durations_ms": [45000],
+      "loop": false,
+      "spoken_text": "Le seuil de cette partie est de deux villageois. Si le loup garou de sang estime qu'il reste deux villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil de deux."
+    },
+    {
+      "basename": "aides_441_appel_de_la_meute_seuil_3",
+      "filename": "aides_441_appel_de_la_meute_seuil_3.mp3",
+      "category": "aides",
+      "kind": "voice",
+      "motor_durations_ms": [45000],
+      "loop": false,
+      "spoken_text": "Le seuil de cette partie est de trois villageois. Si le loup garou de sang estime qu'il reste trois villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil de trois."
+    },
+    {
+      "basename": "aides_441_appel_de_la_meute_seuil_4",
+      "filename": "aides_441_appel_de_la_meute_seuil_4.mp3",
+      "category": "aides",
+      "kind": "voice",
+      "motor_durations_ms": [45000],
+      "loop": false,
+      "spoken_text": "Le seuil de cette partie est de quatre villageois. Si le loup garou de sang estime qu'il reste quatre villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil de quatre."
+    },
+    {
+      "basename": "aides_441_appel_de_la_meute_seuil_5",
+      "filename": "aides_441_appel_de_la_meute_seuil_5.mp3",
+      "category": "aides",
+      "kind": "voice",
+      "motor_durations_ms": [45000],
+      "loop": false,
+      "spoken_text": "Le seuil de cette partie est de cinq villageois. Si le loup garou de sang estime qu'il reste cinq villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil de cinq."
+    },
+    {
+      "basename": "aides_442_fin_b1_seuil_1",
+      "filename": "aides_442_fin_b1_seuil_1.mp3",
       "category": "aides",
       "kind": "voice",
       "motor_durations_ms": [55000],
       "loop": false,
-      "spoken_text": "Fin de partie B un. Tous les joueurs sont au conseil des loups, ou tous sauf un. L'appel du loup garou de sang était juste. Les loups garous tuent l'éventuel dernier villageois. Le loup garou de sang et les loups garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd."
+      "spoken_text": "Fin de partie B un. Le seuil de cette partie était d'un villageois et il n'est pas dépassé. L'appel du loup garou de sang était juste. Les loups garous tuent les derniers villageois. Le loup garou de sang et les loups garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd."
     },
     {
-      "basename": "aides_443_fin_b2",
-      "filename": "aides_443_fin_b2.mp3",
+      "basename": "aides_442_fin_b1_seuil_2",
+      "filename": "aides_442_fin_b1_seuil_2.mp3",
+      "category": "aides",
+      "kind": "voice",
+      "motor_durations_ms": [55000],
+      "loop": false,
+      "spoken_text": "Fin de partie B un. Le seuil de cette partie était de deux villageois et il n'est pas dépassé. L'appel du loup garou de sang était juste. Les loups garous tuent les derniers villageois. Le loup garou de sang et les loups garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd."
+    },
+    {
+      "basename": "aides_442_fin_b1_seuil_3",
+      "filename": "aides_442_fin_b1_seuil_3.mp3",
+      "category": "aides",
+      "kind": "voice",
+      "motor_durations_ms": [55000],
+      "loop": false,
+      "spoken_text": "Fin de partie B un. Le seuil de cette partie était de trois villageois et il n'est pas dépassé. L'appel du loup garou de sang était juste. Les loups garous tuent les derniers villageois. Le loup garou de sang et les loups garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd."
+    },
+    {
+      "basename": "aides_442_fin_b1_seuil_4",
+      "filename": "aides_442_fin_b1_seuil_4.mp3",
+      "category": "aides",
+      "kind": "voice",
+      "motor_durations_ms": [55000],
+      "loop": false,
+      "spoken_text": "Fin de partie B un. Le seuil de cette partie était de quatre villageois et il n'est pas dépassé. L'appel du loup garou de sang était juste. Les loups garous tuent les derniers villageois. Le loup garou de sang et les loups garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd."
+    },
+    {
+      "basename": "aides_442_fin_b1_seuil_5",
+      "filename": "aides_442_fin_b1_seuil_5.mp3",
+      "category": "aides",
+      "kind": "voice",
+      "motor_durations_ms": [55000],
+      "loop": false,
+      "spoken_text": "Fin de partie B un. Le seuil de cette partie était de cinq villageois et il n'est pas dépassé. L'appel du loup garou de sang était juste. Les loups garous tuent les derniers villageois. Le loup garou de sang et les loups garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd."
+    },
+    {
+      "basename": "aides_443_fin_b2_seuil_1",
+      "filename": "aides_443_fin_b2_seuil_1.mp3",
       "category": "aides",
       "kind": "voice",
       "motor_durations_ms": [60000],
       "loop": false,
-      "spoken_text": "Fin de partie B deux. Au moins deux villageois dormaient encore. Le loup garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup garou de sang et les loups garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups garous."
+      "spoken_text": "Fin de partie B deux. Le seuil de cette partie était d'un villageois et il est dépassé. Le loup garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup garou de sang et les loups garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups garous."
+    },
+    {
+      "basename": "aides_443_fin_b2_seuil_2",
+      "filename": "aides_443_fin_b2_seuil_2.mp3",
+      "category": "aides",
+      "kind": "voice",
+      "motor_durations_ms": [60000],
+      "loop": false,
+      "spoken_text": "Fin de partie B deux. Le seuil de cette partie était de deux villageois et il est dépassé. Le loup garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup garou de sang et les loups garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups garous."
+    },
+    {
+      "basename": "aides_443_fin_b2_seuil_3",
+      "filename": "aides_443_fin_b2_seuil_3.mp3",
+      "category": "aides",
+      "kind": "voice",
+      "motor_durations_ms": [60000],
+      "loop": false,
+      "spoken_text": "Fin de partie B deux. Le seuil de cette partie était de trois villageois et il est dépassé. Le loup garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup garou de sang et les loups garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups garous."
+    },
+    {
+      "basename": "aides_443_fin_b2_seuil_4",
+      "filename": "aides_443_fin_b2_seuil_4.mp3",
+      "category": "aides",
+      "kind": "voice",
+      "motor_durations_ms": [60000],
+      "loop": false,
+      "spoken_text": "Fin de partie B deux. Le seuil de cette partie était de quatre villageois et il est dépassé. Le loup garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup garou de sang et les loups garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups garous."
+    },
+    {
+      "basename": "aides_443_fin_b2_seuil_5",
+      "filename": "aides_443_fin_b2_seuil_5.mp3",
+      "category": "aides",
+      "kind": "voice",
+      "motor_durations_ms": [60000],
+      "loop": false,
+      "spoken_text": "Fin de partie B deux. Le seuil de cette partie était de cinq villageois et il est dépassé. Le loup garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup garou de sang et les loups garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups garous."
     },
     {
       "basename": "aides_450_preparation",

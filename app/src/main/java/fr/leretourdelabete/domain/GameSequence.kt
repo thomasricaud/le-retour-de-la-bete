@@ -73,6 +73,7 @@ object GameSequenceFactory {
         color: NightColor?,
         mode: GameMode,
         departureSeconds: Int,
+        packCallVillagerLimit: Int,
     ): List<GameCue> = buildList {
         val departureAudio = if (departureSeconds == 30) {
             "commun_001_nuit_depart_30"
@@ -140,7 +141,7 @@ object GameSequenceFactory {
             }
             add(wakePackCue(resolvedColor))
             if (mode == GameMode.BEGINNER) {
-                addAll(laterNightBeginnerCues())
+                addAll(laterNightBeginnerCues(packCallVillagerLimit))
             }
         }
 
@@ -195,7 +196,7 @@ object GameSequenceFactory {
         )
     }
 
-    fun helpCues(): List<GameCue> = listOf(
+    fun helpCues(packCallVillagerLimit: Int): List<GameCue> = listOf(
         voice(
             id = "help_setup",
             title = "Préparer la partie",
@@ -242,9 +243,10 @@ object GameSequenceFactory {
         voice(
             id = "help_end",
             title = "Conditions de fin",
-            audio = "aides_441_appel_de_la_meute",
+            audio = packCallAudio("aides_441_appel_de_la_meute", packCallVillagerLimit),
             seconds = 45,
-            text = "Le loup-garou de sang est trouvé le jour, ou appelle sa meute la nuit.",
+            text = "Le loup-garou de sang est trouvé le jour, ou appelle sa meute la nuit " +
+                "s'il pense qu'il reste $packCallVillagerLimit villageois ou moins.",
         ),
         voice(
             id = "help_night_safety",
@@ -279,7 +281,7 @@ object GameSequenceFactory {
         )
     }
 
-    fun endCue(reasonId: String): GameCue = when (reasonId) {
+    fun endCue(reasonId: String, packCallVillagerLimit: Int): GameCue = when (reasonId) {
         "blood_wolf_found" -> voice(
             id = "end_day",
             title = "La Bête est vaincue",
@@ -290,16 +292,18 @@ object GameSequenceFactory {
         "pack_success" -> voice(
             id = "end_pack_success",
             title = "La meute triomphe",
-            audio = "aides_442_fin_b1",
+            audio = packCallAudio("aides_442_fin_b1", packCallVillagerLimit),
             seconds = 55,
-            text = "L'appel de la meute était juste. Le loup-garou de sang et les loups gagnent.",
+            text = "Il restait $packCallVillagerLimit villageois ou moins. L'appel était juste : " +
+                "le loup-garou de sang et les loups gagnent.",
         )
         else -> voice(
             id = "end_pack_failure",
             title = "L'appel était une erreur",
-            audio = "aides_443_fin_b2",
+            audio = packCallAudio("aides_443_fin_b2", packCallVillagerLimit),
             seconds = 60,
-            text = "Au moins deux villageois dormaient encore. Le village se soulève et gagne.",
+            text = "Il restait plus de $packCallVillagerLimit villageois. " +
+                "Le village se soulève et gagne.",
         )
     }
 
@@ -334,7 +338,7 @@ object GameSequenceFactory {
         ),
     )
 
-    private fun laterNightBeginnerCues(): List<GameCue> = listOf(
+    private fun laterNightBeginnerCues(packCallVillagerLimit: Int): List<GameCue> = listOf(
         voice(
             "council_identify",
             "Identifiez-vous",
@@ -345,8 +349,12 @@ object GameSequenceFactory {
         voice(
             "council_end_option",
             "Fin de partie possible",
-            "Le loup-garou de sang peut appeler sa meute s'il pense qu'il reste au plus un villageois.",
-            "debutant_111_option_fin_partie",
+            "Le loup-garou de sang peut appeler sa meute s'il pense qu'il reste " +
+                "$packCallVillagerLimit villageois ou moins.",
+            packCallAudio(
+                "debutant_111_option_fin_partie",
+                packCallVillagerLimit,
+            ),
             15,
         ),
         voice(
@@ -411,6 +419,13 @@ object GameSequenceFactory {
                 seconds = 9,
             )
         }
+
+    private fun packCallAudio(baseName: String, packCallVillagerLimit: Int): String {
+        require(packCallVillagerLimit in 1..5) {
+            "Le seuil de l'appel de la meute doit être compris entre 1 et 5."
+        }
+        return "${baseName}_seuil_$packCallVillagerLimit"
+    }
 
     private fun voice(
         id: String,

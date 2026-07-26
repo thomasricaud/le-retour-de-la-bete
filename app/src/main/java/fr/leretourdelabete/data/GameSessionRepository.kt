@@ -1,6 +1,7 @@
 package fr.leretourdelabete.data
 
 import android.content.Context
+import fr.leretourdelabete.domain.PackCallRule
 import fr.leretourdelabete.model.DayStage
 import fr.leretourdelabete.model.DrawMode
 import fr.leretourdelabete.model.EndReason
@@ -18,6 +19,7 @@ class GameSessionRepository(context: Context) {
             .putString(KEY_MODE, session.mode.name)
             .putString(KEY_DRAW_MODE, session.drawMode.name)
             .putInt(KEY_PLAYERS, session.playerCount)
+            .putInt(KEY_PACK_CALL_VILLAGER_LIMIT, session.packCallVillagerLimit)
             .putInt(KEY_DEPARTURE_SECONDS, session.departureSeconds)
             .putInt(KEY_DAY_MINUTES, session.dayDurationMinutes)
             .putInt(KEY_ROUND, session.round)
@@ -34,6 +36,15 @@ class GameSessionRepository(context: Context) {
 
     fun load(): GameSession? {
         if (!preferences.contains(KEY_SCREEN)) return null
+        val playerCount = preferences.getInt(KEY_PLAYERS, 6).coerceIn(4, 20)
+        val packCallVillagerLimit = if (preferences.contains(KEY_PACK_CALL_VILLAGER_LIMIT)) {
+            preferences.getInt(
+                KEY_PACK_CALL_VILLAGER_LIMIT,
+                PackCallRule.maxRemainingVillagers(playerCount),
+            ).coerceIn(1, playerCount)
+        } else {
+            PackCallRule.maxRemainingVillagers(playerCount)
+        }
         return GameSession(
             screen = enumValueOrDefault(
                 preferences.getString(KEY_SCREEN, null),
@@ -47,7 +58,8 @@ class GameSessionRepository(context: Context) {
                 preferences.getString(KEY_DRAW_MODE, null),
                 DrawMode.APPLICATION,
             ),
-            playerCount = preferences.getInt(KEY_PLAYERS, 6).coerceIn(4, 20),
+            playerCount = playerCount,
+            packCallVillagerLimit = packCallVillagerLimit,
             departureSeconds = preferences.getInt(KEY_DEPARTURE_SECONDS, 45)
                 .takeIf { it == 30 || it == 45 } ?: 45,
             dayDurationMinutes = preferences.getInt(KEY_DAY_MINUTES, 5)
@@ -104,6 +116,7 @@ class GameSessionRepository(context: Context) {
         const val KEY_MODE = "mode"
         const val KEY_DRAW_MODE = "draw_mode"
         const val KEY_PLAYERS = "players"
+        const val KEY_PACK_CALL_VILLAGER_LIMIT = "pack_call_villager_limit"
         const val KEY_DEPARTURE_SECONDS = "departure_seconds"
         const val KEY_DAY_MINUTES = "day_minutes"
         const val KEY_ROUND = "round"
