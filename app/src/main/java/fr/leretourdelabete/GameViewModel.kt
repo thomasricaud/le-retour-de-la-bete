@@ -8,6 +8,7 @@ import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import fr.leretourdelabete.audio.AudioEngine
+import fr.leretourdelabete.audio.PlaybackInfo
 import fr.leretourdelabete.audio.AudioRouteMonitor
 import fr.leretourdelabete.audio.AudioRouteState
 import fr.leretourdelabete.data.GameSessionRepository
@@ -68,22 +69,17 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val updateChecker = GitHubReleaseUpdateChecker()
     private val updateDownloadManager = AppUpdateDownloadManager(application)
     private val audioEngine = AudioEngine(application) {
-        pauseSequence("Lecture mise en pause : une autre application utilise le son.")
+        handleAudioInterruption(
+            "Lecture mise en pause : une autre application utilise le son.",
+        )
     }
     private val routeMonitor = AudioRouteMonitor(application) { route ->
         val previous = _uiState.value.audioRoute
         _uiState.value = _uiState.value.copy(audioRoute = route)
         if (previous.external && !route.external) {
-            when {
-                _uiState.value.isSequencePlaying ->
-                    pauseSequence("Enceinte déconnectée. La partie est en pause.")
-                _uiState.value.standaloneCueId != null -> {
-                    stopStandalone()
-                    _uiState.value = _uiState.value.copy(
-                        statusMessage = "Enceinte déconnectée. La lecture a été arrêtée.",
-                    )
-                }
-            }
+            handleAudioInterruption(
+                "Enceinte déconnectée. La partie et les sons d'ambiance sont en pause.",
+            )
         }
     }
 
@@ -102,14 +98,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         routeMonitor.start()
-        updateDownloadManager.clearIfAlreadyInstalled(BuildConfig.VERSION_NAME)
-        val pendingDownload = updateDownloadManager.pendingDownload()
-        if (pendingDownload != null) {
-            monitorUpdateDownload(pendingDownload)
-        } else {
-            viewModelScope.launch {
-                updateChecker.findAvailableUpdate()?.let { update ->
-                    _uiState.value = _uiState.value.copy(availableUpdate = update)
+        if (!BuildConfig.DEBUG) {
+            updateDownloadManager.clearIfAlreadyInstalled(BuildConfig.VERSION_NAME)
+            val pendingDownload = updateDownloadManager.pendingDownload()
+            if (pendingDownload != null) {
+                monitorUpdateDownload(pendingDownload)
+            } else {
+                viewModelScope.launch {
+                    updateChecker.findAvailableUpdate()?.let { update ->
+                        _uiState.value = _uiState.value.copy(availableUpdate = update)
+                    }
                 }
             }
         }
@@ -168,6 +166,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         )
         if (saved.screen == GameScreen.INTRO || saved.screen == GameScreen.NIGHT) {
             loadSequenceFor(saved, autoplay = false)
+        } else if (saved.screen == GameScreen.DAY || saved.screen == GameScreen.DRAW) {
+            startPhaseAmbience()
         }
     }
 
@@ -198,7 +198,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun replayCurrentCue() {
         val cue = _uiState.value.currentCue ?: return
         stopSequenceClock()
-        audioEngine.stop()
+        audioEngine.stopForeground()
         updateSessionPlayback(
             cueIndex = _uiState.value.session.cueIndex,
             remainingMillis = cue.fallbackDurationMillis,
@@ -221,12 +221,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             repository.save(_uiState.value.session)
         }
         stopStandalone()
+        audioEngine.stopAmbience()
     }
 
     fun pauseAndReturnHome() {
         pauseSequence()
         dayTimerJob?.cancel()
         dayTimerJob = null
+        audioEngine.stopAll()
         repository.save(_uiState.value.session)
         _uiState.value = _uiState.value.copy(
             session = _uiState.value.session.copy(screen = GameScreen.HOME),
@@ -259,6 +261,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.value = state.copy(dayTimerPlaying = false)
             repository.save(state.session)
         } else {
+            startPhaseAmbience()
             startDayTimer()
         }
     }
@@ -311,6 +314,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             statusMessage = null,
             standaloneCueId = null,
         )
+        startPhaseAmbience()
     }
 
     fun drawAutomaticNight() {
@@ -429,7 +433,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun stopStandalone() {
         standaloneJob?.cancel()
         standaloneJob = null
-        audioEngine.stop()
+        audioEngine.stopForeground()
         _uiState.value = _uiState.value.copy(standaloneCueId = null)
     }
 
@@ -581,11 +585,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
         val fallbackTotal = cue.fallbackDurationMillis
         val fallbackElapsed = (fallbackTotal - requestedRemaining).coerceAtLeast(0L)
-        val playback = audioEngine.play(
-            resourceName = cue.audioResource,
-            looping = cue.loopAudio,
-            seekMillis = fallbackElapsed,
-        )
+        val ambiencePlayback = startPhaseAmbience()
+        val playback = if (
+            cue.kind == CueKind.TIMER &&
+            cue.audioResource == NIGHT_AMBIENCE_RESOURCE
+        ) {
+            ambiencePlayback ?: PlaybackInfo(available = false, durationMillis = 0L)
+        } else {
+            audioEngine.playForeground(
+                resourceName = cue.audioResource,
+                looping = cue.loopAudio,
+                seekMillis = fallbackElapsed,
+            )
+        }
         val total = when {
             cue.kind == CueKind.TIMER -> fallbackTotal
             playback.available && playback.durationMillis > 0L -> playback.durationMillis
@@ -645,7 +657,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun advanceCue() {
         stopSequenceClock()
-        audioEngine.stop()
+        audioEngine.stopForeground()
         val nextIndex = _uiState.value.session.cueIndex + 1
         if (nextIndex > activeSequence.lastIndex) {
             completeSequence()
@@ -670,7 +682,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun completeSequence() {
         stopSequenceClock()
-        audioEngine.stop()
+        audioEngine.stopForeground()
         when (_uiState.value.session.screen) {
             GameScreen.INTRO -> {
                 val session = _uiState.value.session.copy(
@@ -710,6 +722,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             dayTimerPlaying = false,
             statusMessage = null,
         )
+        startPhaseAmbience()
         playStandalone(GameSequenceFactory.dayCue("discussion"))
     }
 
@@ -747,7 +760,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         stopSequenceClock()
-        audioEngine.stop()
+        audioEngine.stopForeground()
+        audioEngine.stopAmbience()
         val session = _uiState.value.session.copy(
             cueRemainingMillis = _uiState.value.cueRemainingMillis,
         )
@@ -763,8 +777,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         stopSequenceClock()
         standaloneJob?.cancel()
         standaloneJob = null
-        audioEngine.stop()
-        val playback = audioEngine.play(cue.audioResource)
+        audioEngine.stopForeground()
+        val playback = audioEngine.playForeground(cue.audioResource)
         _uiState.value = _uiState.value.copy(
             standaloneCueId = if (playback.available) cue.id else null,
             statusMessage = if (playback.available) {
@@ -777,7 +791,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             standaloneJob = viewModelScope.launch {
                 delay(playback.durationMillis.coerceAtLeast(250L))
                 if (_uiState.value.standaloneCueId == cue.id) {
-                    audioEngine.stop()
+                    audioEngine.stopForeground()
                     _uiState.value = _uiState.value.copy(standaloneCueId = null)
                 }
                 standaloneJob = null
@@ -803,6 +817,43 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 fallbackDurationMillis = 7_000L,
             )
         }
+
+    private fun startPhaseAmbience(): PlaybackInfo? {
+        val resourceName = when (_uiState.value.session.screen) {
+            GameScreen.NIGHT -> NIGHT_AMBIENCE_RESOURCE
+            GameScreen.DAY,
+            GameScreen.DRAW,
+            -> DAY_AMBIENCE_RESOURCE
+            else -> null
+        }
+        if (resourceName == null) {
+            audioEngine.stopAmbience()
+            return null
+        }
+        return audioEngine.playAmbience(resourceName)
+    }
+
+    private fun handleAudioInterruption(message: String) {
+        if (_uiState.value.isSequencePlaying) {
+            pauseSequence(message)
+            return
+        }
+
+        val timerWasPlaying = _uiState.value.dayTimerPlaying
+        dayTimerJob?.cancel()
+        dayTimerJob = null
+        standaloneJob?.cancel()
+        standaloneJob = null
+        audioEngine.stopAll()
+        if (timerWasPlaying) {
+            repository.save(_uiState.value.session)
+        }
+        _uiState.value = _uiState.value.copy(
+            dayTimerPlaying = false,
+            standaloneCueId = null,
+            statusMessage = message,
+        )
+    }
 
     private fun updateSessionPlayback(cueIndex: Int, remainingMillis: Long) {
         val session = _uiState.value.session.copy(
@@ -876,7 +927,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         dayTimerJob = null
         standaloneJob?.cancel()
         standaloneJob = null
-        audioEngine.stop()
+        audioEngine.stopAll()
         _uiState.value = _uiState.value.copy(
             isSequencePlaying = false,
             dayTimerPlaying = false,
@@ -889,5 +940,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         routeMonitor.stop()
         audioEngine.release()
         super.onCleared()
+    }
+
+    private companion object {
+        const val NIGHT_AMBIENCE_RESOURCE = "commun_012_ambiance_nuit_boucle"
+        const val DAY_AMBIENCE_RESOURCE = "commun_013_ambiance_jour_boucle"
     }
 }

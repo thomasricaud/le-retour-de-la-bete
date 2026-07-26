@@ -26,7 +26,7 @@ Interface Compose plein écran
 GameViewModel — automate et minuteries
         ├── GameSequenceFactory — scripts dynamiques jaune / vert
         ├── NightDeck — paquet 4 jaunes + 4 vertes sans remise
-        ├── AudioEngine — MediaPlayer, focus audio et repli silencieux
+        ├── AudioEngine — deux MediaPlayer, focus audio et repli silencieux
         ├── AudioRouteMonitor — téléphone / Bluetooth / USB / filaire
         ├── GitHubReleaseUpdateChecker — contrôle non bloquant de version
         ├── AppUpdateDownloadManager — téléchargement et installateur Android
@@ -37,6 +37,16 @@ La résolution audio est volontairement dynamique. Chaque séquence indique un
 basename tel que `jaune_303_reveil_meute_jaune`. `AudioEngine` cherche la
 ressource correspondante dans `res/raw`. Si elle n'existe pas, l'application
 reste utilisable avec le texte et une minuterie silencieuse.
+
+Le moteur conserve deux lecteurs indépendants sous un même focus audio :
+
+- un lecteur d'ambiance stéréo atténué à 28 %, en boucle continue pendant la
+  phase Nuit ou Jour ;
+- un lecteur de premier plan à plein volume pour les voix, les bips, le
+  cocorico et les autres effets.
+
+Le passage au Jour remplace la boucle nocturne par la boucle diurne. La boucle
+diurne reste active pendant le tirage, jusqu'au lancement de la nuit suivante.
 
 ## Automate principal
 
@@ -84,7 +94,7 @@ automatiquement la lecture guidée en pause.
 
 - Kotlin, Jetpack Compose et Material 3.
 - API minimale 26, cible Android 35.
-- `MediaPlayer` natif pour ne pas dépendre d'une bibliothèque réseau
+- Deux `MediaPlayer` natifs pour mixer ambiance et consignes sans dépendre d'une bibliothèque réseau
   supplémentaire.
 - `SharedPreferences` pour un petit état local et déterministe.
 - Permission Internet limitée au contrôle HTTPS de la dernière release GitHub

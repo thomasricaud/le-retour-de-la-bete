@@ -29,21 +29,36 @@ non bloquante vérifie uniquement la dernière release GitHub au démarrage.
 - Téléchargement suivi par le gestionnaire Android lorsqu'une release GitHub
   plus récente existe, puis proposition d'ouvrir l'installateur ; sans
   connexion, l'application démarre normalement et n'affiche aucune erreur.
-- Six ressources audio intégrées pour les séquences de nuit communes et
-  confirmées ; les ressources absentes conservent le texte affiché et la
-  minuterie silencieuse.
+- Les 43 ressources audio sont intégrées. L'ambiance nocturne tourne en continu
+  pendant toute la nuit et l'ambiance de village diurne, sans voix, pendant tout
+  le jour. Les consignes et effets (notamment le cocorico) sont joués
+  simultanément au premier plan.
 
-Le catalogue complet des 42 enregistrements, dont 6 sont actuellement intégrés,
-se trouve dans
+Le catalogue complet des 43 enregistrements intégrés se trouve dans
 [`docs/AUDIO_ASSETS.md`](docs/AUDIO_ASSETS.md). Le manifeste exploitable par un
 outil de production se trouve dans
 [`app/src/main/assets/audio_manifest.json`](app/src/main/assets/audio_manifest.json).
 
-## Compléter les sons
+## Régénérer les sons
 
-1. Enregistrer ou produire les fichiers MP3 manquants avec les noms exacts du
-   catalogue.
-2. Copier tous les MP3 directement dans `app/src/main/res/raw/` — Android
+Le catalogue complet peut être régénéré dans `artifacts/`, sans modifier
+automatiquement les ressources intégrées :
+
+```powershell
+python -m venv artifacts/tts-production/.venv
+artifacts/tts-production/.venv/Scripts/python.exe -m pip install -r scripts/audio_requirements.txt
+artifacts/tts-production/.venv/Scripts/python.exe scripts/build_day_village_ambience.py
+artifacts/tts-production/.venv/Scripts/python.exe scripts/build_complete_audio_catalog.py
+```
+
+La commande de génération du catalogue envoie uniquement les textes manquants
+du manifeste au service Microsoft Edge TTS. Elle n'envoie ni les enregistrements
+sources, ni les autres fichiers du dépôt. Les résultats restent dans
+`artifacts/` afin de permettre une nouvelle écoute avant tout remplacement.
+
+1. Produire les fichiers MP3 avec les noms exacts du catalogue.
+2. Après validation, copier tous les MP3 directement dans
+   `app/src/main/res/raw/` — Android
    n'accepte pas de sous-dossiers dans ce répertoire.
 3. Recompiler. Aucune modification Kotlin n'est nécessaire.
 
@@ -59,6 +74,12 @@ Pré-requis : JDK 17 et Android SDK 35.
 
 APK de développement :
 `app/build/outputs/apk/debug/app-debug.apk`.
+
+La variante debug utilise le package distinct `fr.leretourdelabete.debug` et le
+libellé « Le Retour de la Bête (Debug) ». Elle peut rester installée à côté de la
+version publique ; ses données sont réservées aux essais et peuvent être effacées
+sans toucher aux parties de production. La recherche et l'installation des mises
+à jour publiques sont désactivées dans cette variante.
 
 ## Télécharger une version installable
 

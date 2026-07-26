@@ -4,7 +4,7 @@
   "resource_directory": "app/src/main/res/raw",
   "file_extension": ".mp3",
   "flat_android_raw_directory": true,
-  "asset_count": 42,
+  "asset_count": 43,
   "timing_contract": {
     "departure_options_ms": [
       30000,
@@ -14,7 +14,11 @@
     "wolf_council_ms": 115000,
     "council_end_beeps_ms": 11000,
     "timer_loop_basename": "commun_012_ambiance_nuit_boucle",
-    "notes": "Les voix et effets disponibles utilisent leur durée MediaPlayer réelle. Les minuteries utilisant la boucle restent pilotées par le moteur."
+    "phase_loop_basenames": {
+      "night": "commun_012_ambiance_nuit_boucle",
+      "day": "commun_013_ambiance_jour_boucle"
+    },
+    "notes": "Les ambiances de phase tournent en boucle sur un lecteur dédié. Les voix et effets disponibles sont joués simultanément sur un second lecteur et utilisent leur durée MediaPlayer réelle."
   },
   "assets": [
     {
@@ -127,6 +131,16 @@
       "loop": true,
       "spoken_text": null,
       "production_direction": "Ambiance nocturne discrète, sombre et parfaitement bouclable, sans voix, sans signal de fin et sans événement sonore susceptible de masquer une consigne."
+    },
+    {
+      "basename": "commun_013_ambiance_jour_boucle",
+      "filename": "commun_013_ambiance_jour_boucle.mp3",
+      "category": "commun",
+      "kind": "phase_loop",
+      "motor_durations_ms": [],
+      "loop": true,
+      "spoken_text": null,
+      "production_direction": "Ambiance diurne claire, plus légère que la nuit, parfaitement bouclable, sans voix et assez discrète pour laisser les consignes et effets au premier plan."
     },
     {
       "basename": "debutant_101_premiere_nuit_reveil_sang",

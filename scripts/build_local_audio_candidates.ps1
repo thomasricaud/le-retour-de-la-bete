@@ -164,6 +164,7 @@ if ($LASTEXITCODE -ne 0) {
 if ($LASTEXITCODE -ne 0) {
     throw "Échec de production : $ambienceDestination"
 }
+
 Remove-Item -LiteralPath $ambienceWave
 
 $manifestPath = Join-Path $SourceRoot "app\src\main\assets\audio_manifest.json"

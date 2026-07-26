@@ -1,29 +1,26 @@
 # Ressources audio
 
-Ce document est le contrat de production et d'intégration des 42 ressources audio
+Ce document est le contrat de production et d'intégration des 43 ressources audio
 référencées par `GameSequence.kt` et `GameViewModel.kt`.
 
-Six fichiers audio issus des sources locales sont fournis dans le dépôt. Les 36
-ressources restantes doivent encore être produites. Les textes ci-dessous sont les
-textes français exacts à enregistrer. Ne pas ajouter à l'enregistrement les
-indications de production signalées comme non parlées.
+Les 43 fichiers audio sont fournis dans le dépôt. Les textes ci-dessous sont les
+textes français exacts utilisés pour les voix. Ne pas ajouter à l'enregistrement
+les indications de production signalées comme non parlées.
 
 ## État d'intégration
 
-Ressources présentes dans `app/src/main/res/raw/` :
+Les 43 entrées du manifeste ont exactement un MP3 correspondant dans
+`app/src/main/res/raw/`. Les 36 nouvelles voix utilisent
+`fr-FR-RemyMultilingualNeural`, conformément à la validation, et les six
+montages locaux précédemment retenus sont conservés.
 
-- `commun_001_nuit_depart_30.mp3` ;
-- `commun_002_bips_11.mp3` ;
-- `commun_005_cocorico.mp3` ;
-- `commun_006_reveil_village.mp3` ;
-- `commun_012_ambiance_nuit_boucle.mp3` ;
-- `confirme_201_premiere_nuit_reveil_sang.mp3`.
-
-Ces montages ont été validés pour le prototype. Les deux consignes parlées
-conservent le fond musical des fichiers sources et ne constituent donc pas des
-voix isolées conformes à la recommandation de production ci-dessous. Le script
-`scripts/build_local_audio_candidates.ps1` permet de les reproduire sans publier
-les longues pistes sources.
+L'ambiance de jour validée représente une place de village détendue avec des
+oiseaux, une fontaine, des pas et de petits bruits d'activité. Elle ne contient
+aucune voix. Le script `scripts/build_day_village_ambience.py` permet de la
+régénérer. `scripts/build_complete_audio_catalog.py` reconstruit le catalogue
+complet dans `artifacts/` pour écoute avant remplacement. Le script
+`scripts/build_local_audio_candidates.ps1` reproduit séparément les six montages
+issus des longues pistes sources.
 
 ## Contrat Android
 
@@ -47,9 +44,15 @@ rédaction de ce document.
   `MediaPlayer` est utilisée.
 - Si une voix de séquence manque, le moteur conserve le texte à l'écran et limite
   l'attente silencieuse à cinq secondes.
-- `commun_012_ambiance_nuit_boucle` est différent : c'est une boucle pilotée par une
-  minuterie. La durée moteur reste exactement 30 ou 45 secondes pour le départ, puis
-  115 secondes pour le conseil, quelle que soit la durée propre du MP3.
+- `commun_012_ambiance_nuit_boucle` tourne sur le lecteur d'ambiance pendant tout
+  l'écran Nuit, du premier texte au réveil du village. Les minuteries restent
+  exactement de 30 ou 45 secondes pour le départ, puis de 115 secondes pour le
+  conseil, quelle que soit la durée propre du MP3.
+- `commun_013_ambiance_jour_boucle` remplace automatiquement la boucle de nuit à
+  l'entrée dans le Jour et continue pendant le tirage de la prochaine nuit.
+- Les voix et effets utilisent un second `MediaPlayer` : ils ne coupent donc pas
+  l'ambiance de phase et sont mixés par-dessus à plein volume. L'ambiance est
+  atténuée à 28 %.
 - `aides_410_deroulement_nuit` est utilisé avec deux durées de repli : 55 secondes dans
   l'introduction débutant et 60 secondes dans l'écran d'aide. Un seul MP3 est requis.
 
@@ -61,7 +64,8 @@ rédaction de ce document.
 - Supprimer les silences de tête et de fin ; le moteur gère les temps de jeu.
 - Pour les voix : mono, 44,1 kHz ou 48 kHz, 96 à 128 kbit/s.
 - Normaliser toutes les voix au même niveau perçu et éviter l'écrêtage.
-- `commun_012_ambiance_nuit_boucle.mp3` doit former une boucle sans raccord audible.
+- `commun_012_ambiance_nuit_boucle.mp3` et
+  `commun_013_ambiance_jour_boucle.mp3` doivent former des boucles sans raccord audible.
 
 ## Inventaire exhaustif
 
@@ -162,6 +166,14 @@ rédaction de ce document.
 - Production exacte : ambiance nocturne discrète, sombre et parfaitement bouclable,
   sans voix, sans signal de fin et sans événement sonore susceptible de masquer une
   consigne.
+
+#### `commun_013_ambiance_jour_boucle.mp3`
+
+- Type : ambiance en boucle.
+- Durée moteur : toute la phase Jour, tirage de la prochaine nuit compris.
+- Texte parlé : aucun.
+- Production exacte : ambiance diurne claire, plus légère que la nuit et parfaitement
+  bouclable, sans voix ni événement susceptible de masquer une consigne.
 
 ### Débutant
 
