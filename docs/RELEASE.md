@@ -6,12 +6,15 @@ Un tag Git `v*` déclenche `.github/workflows/android-release.yml`.
 
 Le workflow :
 
-1. exécute les tests unitaires et Android Lint ;
-2. construit un APK `release` signé ;
-3. vérifie cryptographiquement la signature ;
-4. publie l’APK comme artifact GitHub Actions ;
-5. crée une GitHub Release pour le tag ;
-6. déploie une page GitHub Pages avec un lien APK stable.
+1. valide un tag au format `vMAJEUR.MINEUR.CORRECTIF` et injecte cette version
+   dans l'APK ;
+2. calcule un `versionCode` Android croissant à partir des trois composantes ;
+3. exécute les tests unitaires et Android Lint ;
+4. construit un APK `release` signé ;
+5. vérifie cryptographiquement la signature ;
+6. publie l’APK comme artifact GitHub Actions ;
+7. crée une GitHub Release pour le tag ;
+8. déploie une page GitHub Pages avec un lien APK stable.
 
 Adresse de téléchargement prévue :
 
@@ -20,6 +23,31 @@ Adresse de téléchargement prévue :
 Adresse directe de l’APK :
 
 `https://thomasricaud.github.io/le-retour-de-la-bete/le-retour-de-la-bete.apk`
+
+## Détection des mises à jour dans l'application
+
+À chaque démarrage, l'application interroge en arrière-plan la dernière release
+publique via l'API GitHub. Elle compare son `versionName` au `tag_name` de la
+release, au format `vMAJEUR.MINEUR.CORRECTIF`.
+
+Le numéro installé est lu dynamiquement depuis le build : aucune version
+particulière n'est codée en dur. Toute version plus ancienne peut donc proposer
+directement la release la plus récente, même si plusieurs versions
+intermédiaires ont été ignorées.
+
+Lors d'une publication, le workflow injecte automatiquement le numéro du tag
+dans l'APK. Il ne faut donc pas modifier manuellement `versionName` ou
+`versionCode` avant chaque release. Pour conserver un ordre strict des
+`versionCode`, les composantes MINEUR et CORRECTIF doivent rester comprises
+entre 0 et 999.
+
+Si la release est plus récente, un dialogue propose d'ouvrir l'asset
+`le-retour-de-la-bete.apk`. L'utilisateur reste responsable du téléchargement
+et de l'installation Android. Aucun téléchargement n'est automatique.
+
+La requête utilise des délais courts et toute erreur réseau, API ou de format
+est ignorée : le démarrage et la partie restent entièrement utilisables hors
+ligne.
 
 ## Secrets GitHub nécessaires
 

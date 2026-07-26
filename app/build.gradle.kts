@@ -9,6 +9,8 @@ val releaseKeystorePassword =
     providers.environmentVariable("ANDROID_KEYSTORE_PASSWORD").orNull
 val releaseKeyAlias = providers.environmentVariable("ANDROID_KEY_ALIAS").orNull
 val releaseKeyPassword = providers.environmentVariable("ANDROID_KEY_PASSWORD").orNull
+val appVersionCode = providers.gradleProperty("appVersionCode").map(String::toInt).orElse(2)
+val appVersionName = providers.gradleProperty("appVersionName").orElse("0.2.0")
 
 android {
     namespace = "fr.leretourdelabete"
@@ -18,8 +20,8 @@ android {
         applicationId = "fr.leretourdelabete"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = appVersionCode.get()
+        versionName = appVersionName.get()
 
         vectorDrawables.useSupportLibrary = true
     }

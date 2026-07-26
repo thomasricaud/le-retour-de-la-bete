@@ -14,8 +14,9 @@ Elle pilote uniquement :
   remise ;
 - la sauvegarde technique de la phase en cours afin de reprendre une partie.
 
-Elle ne contient aucun compte, aucun réseau, aucune génération vocale et aucune
-synchronisation entre téléphones.
+Elle ne contient aucun compte, aucune fonctionnalité de jeu en réseau, aucune
+génération vocale et aucune synchronisation entre téléphones. Une requête HTTPS
+non bloquante vérifie uniquement la dernière release GitHub au démarrage.
 
 ## État du prototype
 
@@ -25,6 +26,8 @@ synchronisation entre téléphones.
 - Départ configurable à 30 ou 45 secondes.
 - Concertation du jour libre ou minutée.
 - Détection d'une sortie Bluetooth, USB ou filaire.
+- Proposition de téléchargement lorsqu'une release GitHub plus récente existe ;
+  sans connexion, l'application démarre normalement et n'affiche aucune erreur.
 - Six ressources audio intégrées pour les séquences de nuit communes et
   confirmées ; les ressources absentes conservent le texte affiché et la
   minuterie silencieuse.

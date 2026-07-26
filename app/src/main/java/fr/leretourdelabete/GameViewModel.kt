@@ -2,6 +2,7 @@ package fr.leretourdelabete
 
 import android.app.Application
 import android.content.Intent
+import android.net.Uri
 import android.provider.Settings
 import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
@@ -10,6 +11,8 @@ import fr.leretourdelabete.audio.AudioEngine
 import fr.leretourdelabete.audio.AudioRouteMonitor
 import fr.leretourdelabete.audio.AudioRouteState
 import fr.leretourdelabete.data.GameSessionRepository
+import fr.leretourdelabete.data.AppUpdate
+import fr.leretourdelabete.data.GitHubReleaseUpdateChecker
 import fr.leretourdelabete.domain.CueKind
 import fr.leretourdelabete.domain.GameCue
 import fr.leretourdelabete.domain.GameSequenceFactory
@@ -42,10 +45,12 @@ data class GameUiState(
     val audioRoute: AudioRouteState = AudioRouteState(),
     val statusMessage: String? = null,
     val standaloneCueId: String? = null,
+    val availableUpdate: AppUpdate? = null,
 )
 
 class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = GameSessionRepository(application)
+    private val updateChecker = GitHubReleaseUpdateChecker()
     private val audioEngine = AudioEngine(application) {
         pauseSequence("Lecture mise en pause : une autre application utilise le son.")
     }
@@ -79,6 +84,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         routeMonitor.start()
+        viewModelScope.launch {
+            updateChecker.findAvailableUpdate()?.let { update ->
+                _uiState.value = _uiState.value.copy(availableUpdate = update)
+            }
+        }
     }
 
     fun updateSetup(transform: (SetupOptions) -> SetupOptions) {
@@ -210,6 +220,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             hasSavedGame = false,
             audioRoute = _uiState.value.audioRoute,
             setup = _uiState.value.setup,
+            availableUpdate = _uiState.value.availableUpdate,
         )
     }
 
@@ -407,6 +418,24 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val intent = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         getApplication<Application>().startActivity(intent)
+    }
+
+    fun dismissAvailableUpdate() {
+        _uiState.value = _uiState.value.copy(availableUpdate = null)
+    }
+
+    fun launchAvailableUpdate() {
+        val update = _uiState.value.availableUpdate ?: return
+        _uiState.value = _uiState.value.copy(availableUpdate = null)
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(update.launchUrl))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching {
+            getApplication<Application>().startActivity(intent)
+        }.onFailure {
+            _uiState.value = _uiState.value.copy(
+                statusMessage = "Impossible d’ouvrir le téléchargement de la mise à jour.",
+            )
+        }
     }
 
     fun clearStatusMessage() {

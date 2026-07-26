@@ -28,6 +28,7 @@ GameViewModel — automate et minuteries
         ├── NightDeck — paquet 4 jaunes + 4 vertes sans remise
         ├── AudioEngine — MediaPlayer, focus audio et repli silencieux
         ├── AudioRouteMonitor — téléphone / Bluetooth / USB / filaire
+        ├── GitHubReleaseUpdateChecker — contrôle non bloquant de version
         └── GameSessionRepository — reprise locale via SharedPreferences
 ```
 
@@ -85,5 +86,7 @@ automatiquement la lecture guidée en pause.
 - `MediaPlayer` natif pour ne pas dépendre d'une bibliothèque réseau
   supplémentaire.
 - `SharedPreferences` pour un petit état local et déterministe.
-- Aucune permission Internet.
+- Permission Internet limitée au contrôle HTTPS de la dernière release GitHub
+  au démarrage. Un échec, une absence de réseau ou une réponse invalide sont
+  ignorés et n'empêchent jamais l'utilisation hors ligne.
 - Orientation paysage et écran maintenu allumé pendant la partie.

@@ -52,8 +52,33 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
+          version_args=()
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            version_name="${GITHUB_REF_NAME#v}"
+            if [[ ! "$version_name" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+              echo "::error::Release tags must use vMAJOR.MINOR.PATCH (received $GITHUB_REF_NAME)"
+              exit 1
+            fi
+            major=$((10#${BASH_REMATCH[1]}))
+            minor=$((10#${BASH_REMATCH[2]}))
+            patch=$((10#${BASH_REMATCH[3]}))
+            if (( minor > 999 || patch > 999 )); then
+              echo "::error::MINOR and PATCH must remain between 0 and 999"
+              exit 1
+            fi
+            version_code=$((major * 1000000 + minor * 1000 + patch))
+            if (( version_code < 1 || version_code > 2100000000 )); then
+              echo "::error::Computed Android versionCode is outside the supported range"
+              exit 1
+            fi
+            version_args+=(
+              "-PappVersionName=$version_name"
+              "-PappVersionCode=$version_code"
+            )
+          fi
           chmod +x gradlew
-          ./gradlew testDebugUnitTest lintDebug assembleRelease --no-daemon
+          ./gradlew testDebugUnitTest lintDebug assembleRelease \
+            "${version_args[@]}" --no-daemon
 
       - name: Verify APK signature
         run: |

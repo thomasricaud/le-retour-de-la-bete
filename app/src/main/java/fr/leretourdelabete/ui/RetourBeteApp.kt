@@ -17,8 +17,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -107,6 +109,32 @@ fun RetourBeteApp(viewModel: GameViewModel = viewModel()) {
                     .fillMaxWidth(0.76f),
             )
         }
+    }
+
+    state.availableUpdate?.takeIf { screen == GameScreen.HOME }?.let { update ->
+        AlertDialog(
+            onDismissRequest = viewModel::dismissAvailableUpdate,
+            title = {
+                Text("Mise à jour disponible")
+            },
+            text = {
+                Text(
+                    "La version ${update.latestVersion} est disponible " +
+                        "(version installée : ${update.currentVersion}). " +
+                        "Voulez-vous ouvrir le téléchargement ?",
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = viewModel::launchAvailableUpdate) {
+                    Text("TÉLÉCHARGER")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::dismissAvailableUpdate) {
+                    Text("PLUS TARD")
+                }
+            },
+        )
     }
 }
 
