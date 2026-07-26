@@ -114,6 +114,18 @@ fun RetourBeteApp(viewModel: GameViewModel = viewModel()) {
                     .fillMaxWidth(0.76f),
             )
         }
+
+        if (screen == GameScreen.HOME) {
+            Text(
+                text = "Version ${BuildConfig.VERSION_NAME}",
+                style = MaterialTheme.typography.bodySmall,
+                color = Parchment.copy(alpha = 0.75f),
+                textAlign = TextAlign.End,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(horizontal = 18.dp, vertical = 12.dp),
+            )
+        }
     }
 
     state.availableUpdate?.takeIf { screen == GameScreen.HOME }?.let { update ->
@@ -252,14 +264,6 @@ private fun HomeScreen(
                         "L'application ne pilote que le rythme, les tirages et les annonces.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Parchment.copy(alpha = 0.8f),
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "Version ${BuildConfig.VERSION_NAME}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Parchment.copy(alpha = 0.55f),
-                    textAlign = TextAlign.End,
-                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
