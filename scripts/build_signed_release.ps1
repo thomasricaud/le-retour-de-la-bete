@@ -1,8 +1,16 @@
 param(
-    [switch]$SkipChecks
+    [switch]$SkipChecks,
+    [string]$VersionName,
+    [int]$VersionCode
 )
 
 $ErrorActionPreference = "Stop"
+$hasVersionName = -not [string]::IsNullOrWhiteSpace($VersionName)
+$hasVersionCode = $VersionCode -gt 0
+if ($hasVersionName -ne $hasVersionCode) {
+    throw "VersionName et VersionCode doivent être fournis ensemble."
+}
+
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $signingDirectory = Join-Path $projectRoot ".signing"
 $credentialsPath = Join-Path $signingDirectory "credentials.dpapi.xml"
@@ -49,6 +57,10 @@ try {
         }
         $gradleArgs = @()
         $gradleArgs += $tasks
+        if ($hasVersionName) {
+            $gradleArgs += "-PappVersionName=$VersionName"
+            $gradleArgs += "-PappVersionCode=$VersionCode"
+        }
         $gradleArgs += "--offline"
         $gradleArgs += "--no-daemon"
         & ".\gradlew.bat" $gradleArgs
