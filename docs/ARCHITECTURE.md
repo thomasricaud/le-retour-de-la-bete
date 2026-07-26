@@ -29,6 +29,7 @@ GameViewModel — automate et minuteries
         ├── AudioEngine — MediaPlayer, focus audio et repli silencieux
         ├── AudioRouteMonitor — téléphone / Bluetooth / USB / filaire
         ├── GitHubReleaseUpdateChecker — contrôle non bloquant de version
+        ├── AppUpdateDownloadManager — téléchargement et installateur Android
         └── GameSessionRepository — reprise locale via SharedPreferences
 ```
 

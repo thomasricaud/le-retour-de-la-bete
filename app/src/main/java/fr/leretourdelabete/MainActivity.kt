@@ -5,6 +5,7 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -12,6 +13,8 @@ import fr.leretourdelabete.ui.RetourBeteApp
 import fr.leretourdelabete.ui.theme.RetourBeteTheme
 
 class MainActivity : ComponentActivity() {
+    private val gameViewModel: GameViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -25,8 +28,13 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             RetourBeteTheme {
-                RetourBeteApp()
+                RetourBeteApp(gameViewModel)
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        gameViewModel.resumePendingUpdateInstallation()
     }
 }

@@ -41,9 +41,15 @@ dans l'APK. Il ne faut donc pas modifier manuellement `versionName` ou
 `versionCode`, les composantes MINEUR et CORRECTIF doivent rester comprises
 entre 0 et 999.
 
-Si la release est plus récente, un dialogue propose d'ouvrir l'asset
-`le-retour-de-la-bete.apk`. L'utilisateur reste responsable du téléchargement
-et de l'installation Android. Aucun téléchargement n'est automatique.
+Si la release est plus récente, un dialogue propose de télécharger l'asset
+`le-retour-de-la-bete.apk` via le `DownloadManager` Android. L'application suit
+la progression, vérifie la fin du téléchargement, puis propose d'ouvrir
+l'installateur Android. Le navigateur n'intervient plus dans ce flux.
+
+Au premier essai, Android peut demander d'autoriser temporairement
+l'installation depuis Le Retour de la Bête. L'application ouvre le réglage
+ciblé puis reprend l'installation au retour. Aucune installation n'est
+silencieuse.
 
 La requête utilise des délais courts et toute erreur réseau, API ou de format
 est ignorée : le démarrage et la partie restent entièrement utilisables hors

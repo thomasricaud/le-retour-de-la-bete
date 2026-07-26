@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.leretourdelabete.GameUiState
 import fr.leretourdelabete.GameViewModel
+import fr.leretourdelabete.BuildConfig
 import fr.leretourdelabete.R
 import fr.leretourdelabete.domain.GameSequenceFactory
 import fr.leretourdelabete.model.DrawMode
@@ -100,7 +101,11 @@ fun RetourBeteApp(viewModel: GameViewModel = viewModel()) {
             GameScreen.END -> EndScreen(state = state, viewModel = viewModel)
         }
 
-        state.statusMessage?.let { message ->
+        val bottomMessage = state.updateDownload
+            ?.takeUnless { it.readyToInstall }
+            ?.let(::formatUpdateDownloadProgress)
+            ?: state.statusMessage
+        bottomMessage?.let { message ->
             StatusBanner(
                 message = message,
                 modifier = Modifier
@@ -125,7 +130,7 @@ fun RetourBeteApp(viewModel: GameViewModel = viewModel()) {
                 )
             },
             confirmButton = {
-                TextButton(onClick = viewModel::launchAvailableUpdate) {
+                TextButton(onClick = viewModel::startAvailableUpdateDownload) {
                     Text("TÉLÉCHARGER")
                 }
             },
@@ -135,6 +140,44 @@ fun RetourBeteApp(viewModel: GameViewModel = viewModel()) {
                 }
             },
         )
+    }
+
+    state.updateDownload
+        ?.takeIf { it.readyToInstall && state.showUpdateInstallPrompt && screen == GameScreen.HOME }
+        ?.let { download ->
+            AlertDialog(
+                onDismissRequest = viewModel::dismissUpdateInstallPrompt,
+                title = {
+                    Text("Mise à jour téléchargée")
+                },
+                text = {
+                    Text(
+                        "La version ${download.version} est prête. " +
+                            "Android peut demander d’autoriser temporairement " +
+                            "l’installation depuis cette application.",
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = viewModel::installDownloadedUpdate) {
+                        Text("INSTALLER")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = viewModel::dismissUpdateInstallPrompt) {
+                        Text("PLUS TARD")
+                    }
+                },
+            )
+        }
+}
+
+private fun formatUpdateDownloadProgress(download: fr.leretourdelabete.UpdateDownloadUiState): String {
+    val total = download.totalBytes
+    return if (total > 0L) {
+        val percent = (download.downloadedBytes * 100L / total).coerceIn(0L, 100L)
+        "Téléchargement de la mise à jour ${download.version} : $percent %"
+    } else {
+        "Téléchargement de la mise à jour ${download.version}…"
     }
 }
 
@@ -209,6 +252,14 @@ private fun HomeScreen(
                         "L'application ne pilote que le rythme, les tirages et les annonces.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Parchment.copy(alpha = 0.8f),
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Version ${BuildConfig.VERSION_NAME}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Parchment.copy(alpha = 0.55f),
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }

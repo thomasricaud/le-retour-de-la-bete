@@ -12,7 +12,11 @@ import fr.leretourdelabete.audio.AudioRouteMonitor
 import fr.leretourdelabete.audio.AudioRouteState
 import fr.leretourdelabete.data.GameSessionRepository
 import fr.leretourdelabete.data.AppUpdate
+import fr.leretourdelabete.data.AppUpdateDownloadManager
+import fr.leretourdelabete.data.AppUpdateDownloadStatus
+import fr.leretourdelabete.data.AppUpdateInstallResult
 import fr.leretourdelabete.data.GitHubReleaseUpdateChecker
+import fr.leretourdelabete.data.PendingAppUpdateDownload
 import fr.leretourdelabete.domain.CueKind
 import fr.leretourdelabete.domain.GameCue
 import fr.leretourdelabete.domain.GameSequenceFactory
@@ -29,7 +33,16 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+data class UpdateDownloadUiState(
+    val version: String,
+    val downloadedBytes: Long = 0L,
+    val totalBytes: Long = 0L,
+    val readyToInstall: Boolean = false,
+)
 
 data class GameUiState(
     val session: GameSession = GameSession(),
@@ -46,11 +59,14 @@ data class GameUiState(
     val statusMessage: String? = null,
     val standaloneCueId: String? = null,
     val availableUpdate: AppUpdate? = null,
+    val updateDownload: UpdateDownloadUiState? = null,
+    val showUpdateInstallPrompt: Boolean = false,
 )
 
 class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = GameSessionRepository(application)
     private val updateChecker = GitHubReleaseUpdateChecker()
+    private val updateDownloadManager = AppUpdateDownloadManager(application)
     private val audioEngine = AudioEngine(application) {
         pauseSequence("Lecture mise en pause : une autre application utilise le son.")
     }
@@ -80,13 +96,21 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private var sequenceJob: Job? = null
     private var dayTimerJob: Job? = null
     private var standaloneJob: Job? = null
+    private var updateDownloadJob: Job? = null
     private var lastPersistedSecond: Long = -1L
+    private var waitingForInstallPermission = false
 
     init {
         routeMonitor.start()
-        viewModelScope.launch {
-            updateChecker.findAvailableUpdate()?.let { update ->
-                _uiState.value = _uiState.value.copy(availableUpdate = update)
+        updateDownloadManager.clearIfAlreadyInstalled(BuildConfig.VERSION_NAME)
+        val pendingDownload = updateDownloadManager.pendingDownload()
+        if (pendingDownload != null) {
+            monitorUpdateDownload(pendingDownload)
+        } else {
+            viewModelScope.launch {
+                updateChecker.findAvailableUpdate()?.let { update ->
+                    _uiState.value = _uiState.value.copy(availableUpdate = update)
+                }
             }
         }
     }
@@ -221,6 +245,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             audioRoute = _uiState.value.audioRoute,
             setup = _uiState.value.setup,
             availableUpdate = _uiState.value.availableUpdate,
+            updateDownload = _uiState.value.updateDownload,
+            showUpdateInstallPrompt = _uiState.value.showUpdateInstallPrompt,
         )
     }
 
@@ -424,18 +450,71 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.value = _uiState.value.copy(availableUpdate = null)
     }
 
-    fun launchAvailableUpdate() {
+    fun startAvailableUpdateDownload() {
         val update = _uiState.value.availableUpdate ?: return
-        _uiState.value = _uiState.value.copy(availableUpdate = null)
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(update.launchUrl))
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         runCatching {
-            getApplication<Application>().startActivity(intent)
+            updateDownloadManager.enqueue(update)
+        }.onSuccess { pending ->
+            _uiState.value = _uiState.value.copy(
+                availableUpdate = null,
+                statusMessage = null,
+            )
+            monitorUpdateDownload(pending)
         }.onFailure {
             _uiState.value = _uiState.value.copy(
-                statusMessage = "Impossible d’ouvrir le téléchargement de la mise à jour.",
+                statusMessage = "Impossible de démarrer le téléchargement de la mise à jour.",
             )
         }
+    }
+
+    fun installDownloadedUpdate() {
+        val pending = updateDownloadManager.pendingDownload()
+        if (pending == null) {
+            _uiState.value = _uiState.value.copy(
+                updateDownload = null,
+                showUpdateInstallPrompt = false,
+                statusMessage = "Le fichier de mise à jour est introuvable.",
+            )
+            return
+        }
+        when (updateDownloadManager.install(pending)) {
+            AppUpdateInstallResult.Started -> {
+                waitingForInstallPermission = false
+                _uiState.value = _uiState.value.copy(showUpdateInstallPrompt = false)
+            }
+            AppUpdateInstallResult.PermissionRequired -> {
+                waitingForInstallPermission = true
+                if (!updateDownloadManager.openInstallPermissionSettings()) {
+                    waitingForInstallPermission = false
+                    _uiState.value = _uiState.value.copy(
+                        statusMessage = "Impossible d’ouvrir l’autorisation d’installation.",
+                    )
+                }
+            }
+            AppUpdateInstallResult.FileMissing -> {
+                updateDownloadManager.remove(pending)
+                _uiState.value = _uiState.value.copy(
+                    updateDownload = null,
+                    showUpdateInstallPrompt = false,
+                    statusMessage = "Le fichier de mise à jour est introuvable.",
+                )
+            }
+            AppUpdateInstallResult.NoInstaller -> {
+                _uiState.value = _uiState.value.copy(
+                    statusMessage = "Aucun installateur Android n’est disponible.",
+                )
+            }
+        }
+    }
+
+    fun dismissUpdateInstallPrompt() {
+        _uiState.value = _uiState.value.copy(showUpdateInstallPrompt = false)
+    }
+
+    fun resumePendingUpdateInstallation() {
+        if (!waitingForInstallPermission) return
+        waitingForInstallPermission = false
+        installDownloadedUpdate()
     }
 
     fun clearStatusMessage() {
@@ -732,6 +811,58 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         )
         _uiState.value = _uiState.value.copy(session = session)
         repository.save(session)
+    }
+
+    private fun monitorUpdateDownload(pending: PendingAppUpdateDownload) {
+        updateDownloadJob?.cancel()
+        _uiState.value = _uiState.value.copy(
+            updateDownload = UpdateDownloadUiState(version = pending.version),
+            showUpdateInstallPrompt = false,
+        )
+        updateDownloadJob = viewModelScope.launch {
+            while (true) {
+                val snapshot = withContext(Dispatchers.IO) {
+                    updateDownloadManager.snapshot(pending)
+                }
+                when (snapshot.status) {
+                    AppUpdateDownloadStatus.RUNNING -> {
+                        _uiState.value = _uiState.value.copy(
+                            updateDownload = UpdateDownloadUiState(
+                                version = pending.version,
+                                downloadedBytes = snapshot.downloadedBytes,
+                                totalBytes = snapshot.totalBytes,
+                            ),
+                        )
+                        delay(500L)
+                    }
+                    AppUpdateDownloadStatus.SUCCESSFUL -> {
+                        _uiState.value = _uiState.value.copy(
+                            updateDownload = UpdateDownloadUiState(
+                                version = pending.version,
+                                downloadedBytes = snapshot.downloadedBytes,
+                                totalBytes = snapshot.totalBytes,
+                                readyToInstall = true,
+                            ),
+                            showUpdateInstallPrompt = true,
+                            statusMessage = null,
+                        )
+                        break
+                    }
+                    AppUpdateDownloadStatus.FAILED,
+                    AppUpdateDownloadStatus.MISSING,
+                    -> {
+                        updateDownloadManager.remove(pending)
+                        _uiState.value = _uiState.value.copy(
+                            updateDownload = null,
+                            showUpdateInstallPrompt = false,
+                            statusMessage = "Le téléchargement de la mise à jour a échoué.",
+                        )
+                        break
+                    }
+                }
+            }
+            updateDownloadJob = null
+        }
     }
 
     private fun stopSequenceClock() {

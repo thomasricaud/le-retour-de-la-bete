@@ -26,8 +26,9 @@ non bloquante vérifie uniquement la dernière release GitHub au démarrage.
 - Départ configurable à 30 ou 45 secondes.
 - Concertation du jour libre ou minutée.
 - Détection d'une sortie Bluetooth, USB ou filaire.
-- Proposition de téléchargement lorsqu'une release GitHub plus récente existe ;
-  sans connexion, l'application démarre normalement et n'affiche aucune erreur.
+- Téléchargement suivi par le gestionnaire Android lorsqu'une release GitHub
+  plus récente existe, puis proposition d'ouvrir l'installateur ; sans
+  connexion, l'application démarre normalement et n'affiche aucune erreur.
 - Six ressources audio intégrées pour les séquences de nuit communes et
   confirmées ; les ressources absentes conservent le texte affiché et la
   minuterie silencieuse.
