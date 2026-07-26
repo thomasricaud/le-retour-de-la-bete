@@ -219,8 +219,6 @@ private fun HomeScreen(
                     contentScale = ContentScale.Fit,
                     modifier = Modifier.size(260.dp),
                 )
-                Spacer(Modifier.height(10.dp))
-                Tag("HORS LIGNE · AUCUN RÔLE ENREGISTRÉ", color = GhoulGreen)
             }
 
             Column(
@@ -493,10 +491,9 @@ private fun HelpScreen(
                                     style = MaterialTheme.typography.bodyMedium,
                                 )
                             }
-                            Tag(
-                                if (available) "AUDIO PRÊT" else "AUDIO À FOURNIR",
-                                color = if (available) GhoulGreen else MoonYellow,
-                            )
+                            if (!available) {
+                                Tag("AUDIO À FOURNIR", color = MoonYellow)
+                            }
                             LargeActionButton(
                                 label = if (state.standaloneCueId == cue.id) "ARRÊTER" else "ÉCOUTER",
                                 onClick = {

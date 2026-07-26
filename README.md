@@ -18,6 +18,29 @@ Elle ne contient aucun compte, aucune fonctionnalité de jeu en réseau, aucune
 génération vocale et aucune synchronisation entre téléphones. Une requête HTTPS
 non bloquante vérifie uniquement la dernière release GitHub au démarrage.
 
+## Aperçu
+
+<table>
+  <tr>
+    <td>
+      <img
+        src="app/src/main/res/drawable-nodpi/bg_village_night.webp"
+        alt="Le village et la pleine lune pendant la phase de nuit"
+      >
+    </td>
+    <td>
+      <img
+        src="app/src/main/res/drawable-nodpi/bg_village_day.webp"
+        alt="Le village et son clocher pendant la phase de jour"
+      >
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>La nuit</strong></td>
+    <td align="center"><strong>Le jour</strong></td>
+  </tr>
+</table>
+
 ## État du prototype
 
 - Interface Compose plein écran, verrouillée en paysage.
@@ -99,6 +122,18 @@ Les illustrations originales conservées en haute définition sont dans
 
 Le script `scripts/prepare_android_images.py` régénère les WebP et toutes les
 tailles d'icône à partir des trois sources.
+
+## Créateurs et licence
+
+- **Game designer : Louis-Philippe Marcelino**
+- **Développeur : Thomas Ricaud**
+
+Le code source est distribué sous licence MIT. Le contenu original du jeu est
+distribué sous licence
+[Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/).
+L'utilisation, la modification et les forks sont autorisés à condition de
+conserver l'attribution des créateurs et d'indiquer les modifications
+effectuées. Les conditions complètes figurent dans [`LICENSE`](LICENSE).
 
 ## Documentation
 

@@ -16,15 +16,14 @@
     body {
       min-height: 100vh;
       margin: 0;
-      display: grid;
-      place-items: center;
       padding: 24px;
       background:
         radial-gradient(circle at 50% 15%, #24394d 0, #07111d 48%),
         #07111d;
     }
     main {
-      width: min(560px, 100%);
+      width: min(1040px, 100%);
+      margin: 0 auto;
       padding: 32px;
       text-align: center;
       border: 1px solid #705c5f;
@@ -32,7 +31,7 @@
       background: #0a1825ee;
       box-shadow: 0 24px 80px #0009;
     }
-    img {
+    .emblem {
       width: 180px;
       max-width: 55%;
       border-radius: 24px;
@@ -44,7 +43,8 @@
     }
     p { color: #d7c7a6; line-height: 1.55; }
     a.download {
-      display: block;
+      display: inline-block;
+      min-width: min(420px, 100%);
       margin: 28px 0 14px;
       padding: 18px 22px;
       border-radius: 14px;
@@ -55,12 +55,48 @@
       text-decoration: none;
     }
     a.checksum { color: #d7c7a6; }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 34px;
+    }
+    figure {
+      margin: 0;
+      overflow: hidden;
+      border: 1px solid #705c5f;
+      border-radius: 18px;
+      background: #07111d;
+    }
+    figure img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 3 / 2;
+      object-fit: cover;
+    }
+    figcaption {
+      padding: 12px;
+      color: #f4e9d3;
+      font-weight: 700;
+    }
+    .credits {
+      margin-top: 30px;
+      padding-top: 24px;
+      border-top: 1px solid #705c5f;
+    }
+    .credits strong { color: #f4e9d3; }
+    .credits a { color: #d7c7a6; }
     small { display: block; margin-top: 26px; color: #9aa8b5; }
+    @media (max-width: 700px) {
+      body { padding: 12px; }
+      main { padding: 22px 16px; }
+      .gallery { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
   <main>
-    <img src="app_emblem.webp" alt="">
+    <img class="emblem" src="app_emblem.webp" alt="">
     <h1>Le Retour de la Bête</h1>
     <p>Conducteur sonore Android hors ligne pour lancer et guider une partie.</p>
     <a class="download" href="le-retour-de-la-bete.apk" download>
@@ -73,6 +109,35 @@
       Android peut demander d’autoriser temporairement l’installation
       d’applications provenant du navigateur.
     </small>
+    <section class="gallery" aria-label="Ambiances du jeu">
+      <figure>
+        <img
+          src="bg_village_night.webp"
+          alt="Le village et la pleine lune pendant la phase de nuit"
+        >
+        <figcaption>La nuit</figcaption>
+      </figure>
+      <figure>
+        <img
+          src="bg_village_day.webp"
+          alt="Le village et son clocher pendant la phase de jour"
+        >
+        <figcaption>Le jour</figcaption>
+      </figure>
+    </section>
+    <section class="credits">
+      <p>
+        <strong>Game designer : Louis-Philippe Marcelino</strong><br>
+        <strong>Développeur : Thomas Ricaud</strong>
+      </p>
+      <p>
+        Projet utilisable et modifiable avec attribution, sous licences
+        MIT et
+        <a href="https://creativecommons.org/licenses/by/4.0/">
+          Creative Commons Attribution 4.0
+        </a>.
+      </p>
+    </section>
   </main>
 </body>
 </html>

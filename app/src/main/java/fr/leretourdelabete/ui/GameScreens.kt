@@ -96,7 +96,10 @@ fun SequenceScreen(
                         .fillMaxWidth(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    GlassPanel(modifier = Modifier.fillMaxWidth(0.72f)) {
+                    GlassPanel(
+                        modifier = Modifier.fillMaxWidth(0.72f),
+                        containerAlpha = 0.64f,
+                    ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -184,11 +187,13 @@ private fun ColumnScope.SequenceController(
             .fillMaxWidth()
             .weight(1f),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         GlassPanel(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxHeight(),
+                .fillMaxHeight(0.9f),
+            containerAlpha = 0.64f,
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
@@ -225,22 +230,17 @@ private fun ColumnScope.SequenceController(
                     color = BloodRedBright,
                     trackColor = Parchment.copy(alpha = 0.18f),
                 )
-                Spacer(Modifier.height(14.dp))
-                Tag(
-                    if (state.currentCueHasAudio) {
-                        "AUDIO PRÊT"
-                    } else {
-                        "MINUTERIE SILENCIEUSE · AUDIO À FOURNIR"
-                    },
-                    color = if (state.currentCueHasAudio) GhoulGreen else MoonYellow,
-                )
+                if (!state.currentCueHasAudio) {
+                    Spacer(Modifier.height(14.dp))
+                    Tag("AUDIO À FOURNIR", color = MoonYellow)
+                }
             }
         }
 
         Column(
             modifier = Modifier
                 .width(220.dp)
-                .fillMaxHeight(),
+                .fillMaxHeight(0.9f),
             verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
         ) {
             LargeActionButton(
@@ -307,15 +307,23 @@ fun DayScreen(
             }
             Spacer(Modifier.height(16.dp))
 
-            GlassPanel(
+            Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 42.dp, vertical = 4.dp),
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center,
             ) {
-                when (session.dayStage) {
-                    DayStage.DISCUSSION -> DiscussionStage(state, viewModel)
-                    DayStage.COUNCIL -> CouncilStage(viewModel)
-                    DayStage.HEALING -> HealingStage(viewModel)
+                GlassPanel(
+                    modifier = Modifier
+                        .fillMaxWidth(0.82f)
+                        .fillMaxHeight(),
+                    containerAlpha = 0.6f,
+                ) {
+                    when (session.dayStage) {
+                        DayStage.DISCUSSION -> DiscussionStage(state, viewModel)
+                        DayStage.COUNCIL -> CouncilStage(viewModel)
+                        DayStage.HEALING -> HealingStage(viewModel)
+                    }
                 }
             }
         }
@@ -495,7 +503,10 @@ fun DrawScreen(
                     .fillMaxWidth(),
                 contentAlignment = Alignment.Center,
             ) {
-                GlassPanel(modifier = Modifier.fillMaxWidth(0.74f)) {
+                GlassPanel(
+                    modifier = Modifier.fillMaxWidth(0.74f),
+                    containerAlpha = 0.64f,
+                ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(18.dp),
@@ -621,7 +632,10 @@ fun EndScreen(
                 .padding(30.dp),
             contentAlignment = Alignment.Center,
         ) {
-            GlassPanel(modifier = Modifier.fillMaxWidth(0.72f)) {
+            GlassPanel(
+                modifier = Modifier.fillMaxWidth(0.72f),
+                containerAlpha = 0.64f,
+            ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp),

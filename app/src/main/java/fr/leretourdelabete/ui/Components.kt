@@ -72,6 +72,7 @@ fun GameBackdrop(
             painter = painterResource(background),
             contentDescription = null,
             contentScale = ContentScale.Crop,
+            alignment = Alignment.TopCenter,
             modifier = Modifier.fillMaxSize(),
         )
         Box(
@@ -80,9 +81,9 @@ fun GameBackdrop(
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            NightInk.copy(alpha = if (isDay) 0.36f else 0.25f),
-                            NightInk.copy(alpha = 0.64f),
-                            NightInk.copy(alpha = 0.9f),
+                            NightInk.copy(alpha = if (isDay) 0.1f else 0.1f),
+                            NightInk.copy(alpha = if (isDay) 0.18f else 0.24f),
+                            NightInk.copy(alpha = if (isDay) 0.4f else 0.52f),
                         ),
                     ),
                 ),
@@ -90,7 +91,7 @@ fun GameBackdrop(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(accent.copy(alpha = if (isDay) 0.025f else 0.07f)),
+                .background(accent.copy(alpha = if (isDay) 0.01f else 0.025f)),
         )
         content()
     }
@@ -99,18 +100,19 @@ fun GameBackdrop(
 @Composable
 fun GlassPanel(
     modifier: Modifier = Modifier,
+    containerAlpha: Float = 0.7f,
     content: @Composable () -> Unit,
 ) {
     Surface(
         modifier = modifier,
-        color = NightInk.copy(alpha = 0.88f),
+        color = NightInk.copy(alpha = containerAlpha.coerceIn(0f, 1f)),
         contentColor = Bone,
         shape = RoundedCornerShape(20.dp),
         tonalElevation = 6.dp,
         shadowElevation = 8.dp,
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            Parchment.copy(alpha = 0.25f),
+            Parchment.copy(alpha = 0.32f),
         ),
     ) {
         Box(modifier = Modifier.padding(20.dp)) {

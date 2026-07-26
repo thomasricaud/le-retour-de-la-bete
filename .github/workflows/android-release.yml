@@ -94,6 +94,10 @@ jobs:
           cp distribution/index.html public-download/index.html
           cp app/src/main/res/drawable-nodpi/app_emblem.webp \
             public-download/app_emblem.webp
+          cp app/src/main/res/drawable-nodpi/bg_village_night.webp \
+            public-download/bg_village_night.webp
+          cp app/src/main/res/drawable-nodpi/bg_village_day.webp \
+            public-download/bg_village_day.webp
           cd public-download
           sha256sum le-retour-de-la-bete.apk > le-retour-de-la-bete.apk.sha256
 
