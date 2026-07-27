@@ -30,8 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.leretourdelabete.GameUiState
@@ -402,7 +405,17 @@ private fun SetupScreen(
                             modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            MaterialSummary(setup.playerCount)
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                                    .verticalScroll(rememberScrollState()),
+                            ) {
+                                MaterialSummary(
+                                    playerCount = setup.playerCount,
+                                    drawMode = setup.drawMode,
+                                )
+                            }
                             HorizontalDivider(color = Parchment.copy(alpha = 0.25f))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -551,24 +564,83 @@ private fun OptionLabel(text: String) {
 }
 
 @Composable
-private fun MaterialSummary(playerCount: Int) {
+private fun MaterialSummary(
+    playerCount: Int,
+    drawMode: DrawMode,
+) {
     val secondary = playerCount - 1
     val yellow = (secondary + 1) / 2
     val green = secondary / 2
     val packCallVillagerLimit = PackCallRule.maxRemainingVillagers(playerCount)
-    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-        Text("Matériel pour $playerCount joueurs", style = MaterialTheme.typography.titleLarge)
-        InlineLabelValue("Tirage des rôles", "1 rouge + $secondary bleues")
-        InlineLabelValue("Sac + goules", "$secondary bleues · $yellow jaunes · $green vertes")
-        InlineLabelValue("Loups + Nuits", "$playerCount violettes · 4 jaunes · 4 vertes")
-        InlineLabelValue(
-            "Seuil « Venez à moi… »",
-            "$packCallVillagerLimit villageois ou moins",
+    Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        Text(
+            "Préparation de la table pour $playerCount joueurs",
+            style = MaterialTheme.typography.titleLarge,
         )
         Text(
-            "Aucun nom ni rôle n'est saisi dans l'application.",
-            color = Parchment.copy(alpha = 0.85f),
+            "Pierres dans le sac de guérison",
+            color = Bone,
+            fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.bodyMedium,
         )
+        InlineLabelValue("Tirez les rôles", "1 rouge + $secondary bleues")
+        InlineLabelValue(
+            "puis placez",
+            "$secondary bleues + $yellow jaunes + $green vertes",
+        )
+        InlineLabelValue(
+            "Pierres dans la boîte des loups",
+            "$playerCount violettes",
+        )
+        if (drawMode == DrawMode.PHYSICAL_CARDS) {
+            InlineLabelValue(
+                "Cartes nuits mélangées",
+                "4 jaunes + 4 vertes",
+            )
+        }
+
+        Spacer(Modifier.height(5.dp))
+        Text(
+            "Objectifs et conditions de victoire",
+            style = MaterialTheme.typography.titleLarge,
+        )
+        ObjectiveLine(
+            role = "Villageois (pierre bleue) : ",
+            objective = "découvrir le loup garou de sang en votant pour sa guérison " +
+                "lors du conseil des villageois (le jour).",
+        )
+        ObjectiveLine(
+            role = "Loup garou de sang (pierre rouge) : ",
+            objective = "appeler « sa meute, ses adorateurs » lors du conseil des loups " +
+                "(la nuit) quand il ne reste plus que $packCallVillagerLimit " +
+                "villageois ou moins.",
+        )
+        ObjectiveLine(
+            role = "Loup garou (pierre violette) : ",
+            objective = "aider le loup garou de sang pour gagner avec lui (si c'est le " +
+                "village qui gagne, votre victoire est incertaine).",
+        )
+        ObjectiveLine(
+            role = "Goule (pierre jaune ou verte) : ",
+            objective = "aider le loup garou de sang pour gagner avec lui (dans tous les " +
+                "cas, votre victoire est incertaine).",
+        )
     }
+}
+
+@Composable
+private fun ObjectiveLine(
+    role: String,
+    objective: String,
+) {
+    Text(
+        text = buildAnnotatedString {
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                append(role)
+            }
+            append(objective)
+        },
+        color = Parchment,
+        style = MaterialTheme.typography.bodySmall,
+    )
 }

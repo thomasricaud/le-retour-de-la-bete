@@ -111,8 +111,9 @@ fun SequenceScreen(
                                 color = Bone,
                             )
                             Text(
-                                "La première nuit est spéciale : aucune couleur n'est tirée et " +
-                                    "seul le loup-garou de sang se réveille.",
+                                "La première nuit est spéciale : seul le loup-garou de sang " +
+                                    "se réveille pour partir mordre un villageois qui deviendra " +
+                                    "loup garou.",
                                 color = Parchment,
                                 textAlign = TextAlign.Center,
                                 style = MaterialTheme.typography.bodyLarge,
@@ -246,12 +247,14 @@ private fun ColumnScope.SequenceController(
                 .fillMaxHeight(0.9f),
             verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
         ) {
-            LargeActionButton(
-                "RÉPÉTER",
-                onReplay,
-                Modifier.fillMaxWidth(),
-                ActionTone.SECONDARY,
-            )
+            if (cue?.replayable == true) {
+                LargeActionButton(
+                    "RÉPÉTER",
+                    onReplay,
+                    Modifier.fillMaxWidth(),
+                    ActionTone.SECONDARY,
+                )
+            }
             LargeActionButton(
                 if (state.isSequencePlaying) "PAUSE" else "LECTURE",
                 onPlayPause,

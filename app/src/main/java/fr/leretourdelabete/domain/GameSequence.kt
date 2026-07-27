@@ -18,6 +18,7 @@ data class GameCue(
     val kind: CueKind = CueKind.VOICE,
     val loopAudio: Boolean = false,
     val skippable: Boolean = true,
+    val replayable: Boolean = true,
 )
 
 object GameSequenceFactory {
@@ -27,7 +28,7 @@ object GameSequenceFactory {
                 id = "intro_synopsis",
                 title = "Le retour de la Bête",
                 audio = "aides_401_synopsis",
-                seconds = 55,
+                seconds = 72,
                 text = "Nous pensions les loups-garous décimés. Mais cette nuit, " +
                     "une nouvelle Bête est venue transmettre son mal à l'un d'entre nous. " +
                     "Villageois, restez unis : reconnaissez le loup-garou de sang avant " +
@@ -56,16 +57,18 @@ object GameSequenceFactory {
                 ),
             )
         }
-        add(
-            voice(
-                id = "intro_ready",
-                title = "La partie peut commencer",
-                audio = "commun_000_partie_prete",
-                seconds = 6,
-                text = "Vérifiez les pierres, le sac de guérison et la boîte des loups. " +
-                    "Quand tout le monde est prêt, lancez la première nuit.",
-            ),
-        )
+        if (mode == GameMode.BEGINNER) {
+            add(
+                voice(
+                    id = "intro_ready",
+                    title = "La partie peut commencer",
+                    audio = "commun_000_partie_prete",
+                    seconds = 6,
+                    text = "Vérifiez les pierres, le sac de guérison et la boîte des loups. " +
+                        "Quand tout le monde est prêt, lancez la première nuit.",
+                ),
+            )
+        }
     }
 
     fun night(
@@ -80,58 +83,19 @@ object GameSequenceFactory {
         } else {
             "commun_001_nuit_depart_45"
         }
-        add(
-            voice(
-                id = "night_departure",
-                title = "La nuit tombe",
-                audio = departureAudio,
-                seconds = 7,
-                text = "C'est la nuit. Tous les villageois ont $departureSeconds secondes " +
-                    "pour regagner leurs habitations.",
-            ),
-        )
+        val useConfirmedFirstNightAudio =
+            round == 1 && mode == GameMode.CONFIRMED
         add(
             timer(
                 id = "night_departure_timer",
                 title = "Regagnez vos habitations",
-                text = "Déplacez-vous en silence. La nuit va commencer.",
-                audio = "commun_012_ambiance_nuit_boucle",
+                text = "C'est la nuit, regagnez vos habitations.",
+                audio = departureAudio,
                 seconds = departureSeconds,
-            ),
-        )
-        add(
-            sound(
-                id = "night_first_beeps",
-                title = "Fermez les yeux",
-                text = "Onze bips marquent la fin du déplacement.",
-                audio = "commun_002_bips_11",
-                seconds = 11,
-            ),
-        )
-        add(
-            voice(
-                id = "night_sleep",
-                title = "Le village s'endort",
-                text = "Tous les villageois s'endorment. Fermez les yeux et gardez-les fermés.",
-                audio = "commun_003_endormissement",
-                seconds = 7,
             ),
         )
 
         if (round == 1) {
-            add(
-                voice(
-                    id = "night_first_wake",
-                    title = "Première nuit",
-                    text = "Le loup-garou de sang se réveille.",
-                    audio = if (mode == GameMode.BEGINNER) {
-                        "debutant_101_premiere_nuit_reveil_sang"
-                    } else {
-                        "confirme_201_premiere_nuit_reveil_sang"
-                    },
-                    seconds = 6,
-                ),
-            )
             if (mode == GameMode.BEGINNER) {
                 addAll(firstNightBeginnerCues())
             }
@@ -148,14 +112,24 @@ object GameSequenceFactory {
         add(
             timer(
                 id = "night_council_timer",
-                title = "Conseil des loups",
+                title = if (round == 1) {
+                    "Première nuit"
+                } else {
+                    "Conseil des loups"
+                },
                 text = if (round == 1) {
-                    "Le loup-garou de sang choisit sa première victime."
+                    "Le loup garou de sang se réveille et choisit sa première victime."
                 } else {
                     "La meute s'identifie, choisit le mordeur puis sa victime."
                 },
-                audio = "commun_012_ambiance_nuit_boucle",
+                audio = if (useConfirmedFirstNightAudio) {
+                    "confirm_premiere_nuit"
+                } else {
+                    "commun_012_ambiance_nuit_boucle"
+                },
                 seconds = 115,
+                loopAudio = !useConfirmedFirstNightAudio,
+                replayable = !useConfirmedFirstNightAudio,
             ),
         )
         add(
@@ -462,6 +436,8 @@ object GameSequenceFactory {
         text: String,
         audio: String,
         seconds: Int,
+        loopAudio: Boolean = true,
+        replayable: Boolean = true,
     ) = GameCue(
         id = id,
         title = title,
@@ -469,6 +445,7 @@ object GameSequenceFactory {
         audioResource = audio,
         fallbackDurationMillis = seconds * 1_000L,
         kind = CueKind.TIMER,
-        loopAudio = true,
+        loopAudio = loopAudio,
+        replayable = replayable,
     )
 }

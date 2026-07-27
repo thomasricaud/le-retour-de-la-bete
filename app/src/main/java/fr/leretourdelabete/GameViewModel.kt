@@ -199,6 +199,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun replayCurrentCue() {
         val cue = _uiState.value.currentCue ?: return
+        if (!cue.replayable) return
         stopSequenceClock()
         audioEngine.stopForeground()
         updateSessionPlayback(

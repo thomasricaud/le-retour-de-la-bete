@@ -1,19 +1,22 @@
 # Ressources audio
 
-Ce document est le contrat de production et d'intégration des 59 ressources audio
-référencées par `GameSequence.kt` et `GameViewModel.kt`.
+Ce document est le contrat de production et d'intégration des 60 ressources audio
+livrées avec l'application.
 
-Les 59 fichiers audio du manifeste sont fournis dans le dépôt. Les textes
+Les 60 fichiers audio du manifeste sont fournis dans le dépôt. Les textes
 ci-dessous sont les textes français exacts utilisés pour les voix. Ne pas
 ajouter à l'enregistrement les indications de production signalées comme non
 parlées.
 
 ## État d'intégration
 
-Les 59 entrées du manifeste ont exactement un MP3 correspondant dans
-`app/src/main/res/raw/`. Les voix utilisent `fr-FR-RemyMultilingualNeural`,
-conformément à la validation, et les six montages locaux précédemment retenus
-sont conservés.
+Les 60 entrées du manifeste ont exactement un MP3 correspondant dans
+`app/src/main/res/raw/`. Les voix produites par synthèse utilisent
+`fr-FR-RemyMultilingualNeural`, conformément à la validation. Cinq des six
+montages locaux précédemment retenus sont conservés. Le synopsis et les deux
+minuteries de départ 30/45 secondes ont été remplacés par les pistes validées
+fournies pour cette version. Une quatrième piste dédiée au conseil de la
+première nuit en mode confirmé a été ajoutée.
 
 L'ambiance de jour validée représente une place de village détendue avec des
 oiseaux, une fontaine, des pas et de petits bruits d'activité. Elle ne contient
@@ -46,9 +49,12 @@ rédaction de ce document.
 - Si une voix de séquence manque, le moteur conserve le texte à l'écran et limite
   l'attente silencieuse à cinq secondes.
 - `commun_012_ambiance_nuit_boucle` tourne sur le lecteur d'ambiance pendant tout
-  l'écran Nuit, du premier texte au réveil du village. Les minuteries restent
-  exactement de 30 ou 45 secondes pour le départ, puis de 115 secondes pour le
-  conseil, quelle que soit la durée propre du MP3.
+  l'écran Nuit, du premier texte au réveil du village.
+- La minuterie de départ joue au premier plan
+  `commun_001_nuit_depart_30` ou `commun_001_nuit_depart_45`. Elle reste
+  exactement de 30 ou 45 secondes selon la configuration, quelle que soit la
+  marge d'encodage du MP3.
+- La minuterie du conseil reste exactement de 115 secondes.
 - `commun_013_ambiance_jour_boucle` remplace automatiquement la boucle de nuit à
   l'entrée dans le Jour et continue pendant le tirage de la prochaine nuit.
 - Les voix et effets utilisent un second `MediaPlayer` : ils ne coupent donc pas
@@ -82,19 +88,19 @@ rédaction de ce document.
 
 #### `commun_001_nuit_depart_30.mp3`
 
-- Type : voix.
-- Durée moteur : 7 secondes.
+- Type : minuterie sonorisée.
+- Durée moteur : 30 secondes.
 - Texte exact :
 
-> C'est la nuit. Tous les villageois ont trente secondes pour regagner leurs habitations.
+> C'est la nuit, regagnez vos habitations.
 
 #### `commun_001_nuit_depart_45.mp3`
 
-- Type : voix.
-- Durée moteur : 7 secondes.
+- Type : minuterie sonorisée.
+- Durée moteur : 45 secondes.
 - Texte exact :
 
-> C'est la nuit. Tous les villageois ont quarante-cinq secondes pour regagner leurs habitations.
+> C'est la nuit, regagnez vos habitations.
 
 #### `commun_002_bips_11.mp3`
 
@@ -162,7 +168,8 @@ rédaction de ce document.
 #### `commun_012_ambiance_nuit_boucle.mp3`
 
 - Type : ambiance en boucle.
-- Durées moteur : 30 secondes, 45 secondes ou 115 secondes selon la phase.
+- Durée moteur : toute la phase Nuit ; utilisée seule au premier plan pour les
+  conseils de 115 secondes qui n'ont pas de piste dédiée.
 - Texte parlé : aucun.
 - Production exacte : ambiance nocturne discrète, sombre et parfaitement bouclable,
   sans voix, sans signal de fin et sans événement sonore susceptible de masquer une
@@ -292,18 +299,33 @@ rédaction de ce document.
 
 ### Confirmé
 
+#### `confirm_premiere_nuit.mp3`
+
+- Type : minuterie sonorisée.
+- Mode : première nuit en guidage confirmé.
+- Durée du fichier fourni : environ 1 minute 44.
+- Durée moteur : 1 minute 55.
+- Boucle : non.
+- Répétition manuelle : désactivée.
+- Texte exact :
+
+> Le loup garou de sang se réveille et choisit sa première victime.
+
 #### `confirme_201_premiere_nuit_reveil_sang.mp3`
 
 - Type : voix.
 - Durée moteur : 6 secondes.
+- État : conservée dans le catalogue, mais l'étape séparée a été retirée de la
+  séquence active à partir de la version 0.4.2.
 - Texte exact :
 
 > Le loup garou de sang se réveille.
 
-Le mode confirmé utilise ensuite les ressources communes et les réveils jaune ou vert.
-Le moteur reproduit la séquence : départ, minuterie de 30 ou 45 secondes, onze bips,
-endormissement, réveil de la meute, conseil de 115 secondes, onze bips,
-rendormissement, cocorico et réveil du village.
+Le mode confirmé utilise ensuite les ressources communes et les réveils jaune ou
+vert. Le moteur reproduit désormais la séquence : piste de départ complète de
+30 ou 45 secondes, piste `confirm_premiere_nuit` lors du premier conseil,
+réveil de la meute à partir de la deuxième nuit, conseil de 115 secondes, onze
+bips, rendormissement, cocorico et réveil du village.
 
 ### Jaune
 
@@ -346,7 +368,7 @@ rendormissement, cocorico et réveil du village.
 #### `aides_401_synopsis.mp3`
 
 - Type : voix.
-- Durée moteur : 55 secondes.
+- Durée moteur : 72 secondes.
 - Texte exact :
 
 > Nous pensions les loups garous décimés, mais cette nuit, tous les villageois ont reconnu les hurlements d'une nouvelle bête, née des péchés de ce monde : un Alpha, venu transmettre son mal à l'un d'entre nous. Triste compagnon d'infortune, l'un de nous est maintenant devenu un loup garou de sang qui va chercher à tous nous transformer pour constituer une nouvelle meute. Mais, villageois ! Restons unis et confiants ! Depuis les tragiques événements de Thiercelieux, nous avons appris à reconnaître l'apparition du mal et à enrayer sa propagation. La guérison est possible. Il faudra juste reconnaître le loup garou de sang parmi nous… et te tuer, avant que tu ne t'empares de toutes nos âmes.

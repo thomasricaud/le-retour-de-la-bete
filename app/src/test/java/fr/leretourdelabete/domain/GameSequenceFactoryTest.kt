@@ -18,7 +18,7 @@ class GameSequenceFactoryTest {
             packCallVillagerLimit = 2,
         )
 
-        assertTrue(cues.any { it.id == "night_first_wake" })
+        assertFalse(cues.any { it.id == "night_first_wake" })
         assertFalse(cues.any { it.id.startsWith("wake_pack_") })
         assertFalse(cues.any { "goules jaunes" in it.text.lowercase() })
         assertFalse(cues.any { "goules vertes" in it.text.lowercase() })
@@ -70,7 +70,17 @@ class GameSequenceFactoryTest {
     }
 
     @Test
-    fun `departure setting controls the timer and matching narration`() {
+    fun `confirmed introduction omits the ready announcement`() {
+        val beginner = GameSequenceFactory.intro(GameMode.BEGINNER)
+        val confirmed = GameSequenceFactory.intro(GameMode.CONFIRMED)
+
+        assertTrue(beginner.any { it.id == "intro_ready" })
+        assertFalse(confirmed.any { it.id == "intro_ready" })
+        assertEquals(listOf("intro_synopsis"), confirmed.map { it.id })
+    }
+
+    @Test
+    fun `departure setting controls one timer with matching soundtrack`() {
         val short = GameSequenceFactory.night(
             round = 1,
             color = null,
@@ -92,7 +102,7 @@ class GameSequenceFactoryTest {
         )
         assertEquals(
             "commun_001_nuit_depart_30",
-            short.first { it.id == "night_departure" }.audioResource,
+            short.first { it.id == "night_departure_timer" }.audioResource,
         )
         assertEquals(
             45_000L,
@@ -100,8 +110,69 @@ class GameSequenceFactoryTest {
         )
         assertEquals(
             "commun_001_nuit_depart_45",
-            long.first { it.id == "night_departure" }.audioResource,
+            long.first { it.id == "night_departure_timer" }.audioResource,
         )
+        assertTrue(
+            short.first { it.id == "night_departure_timer" }.text ==
+                "C'est la nuit, regagnez vos habitations.",
+        )
+        listOf("night_departure", "night_first_beeps", "night_sleep", "night_first_wake")
+            .forEach { removedId ->
+                assertFalse(short.any { it.id == removedId })
+                assertFalse(long.any { it.id == removedId })
+            }
+    }
+
+    @Test
+    fun `first council screen carries the requested first night wording`() {
+        val cue = GameSequenceFactory.night(
+            round = 1,
+            color = null,
+            mode = GameMode.CONFIRMED,
+            departureSeconds = 45,
+            packCallVillagerLimit = 2,
+        ).first { it.id == "night_council_timer" }
+
+        assertEquals("Première nuit", cue.title)
+        assertEquals(
+            "Le loup garou de sang se réveille et choisit sa première victime.",
+            cue.text,
+        )
+        assertEquals("confirm_premiere_nuit", cue.audioResource)
+        assertFalse(cue.loopAudio)
+        assertFalse(cue.replayable)
+    }
+
+    @Test
+    fun `later councils keep ambience and replay`() {
+        val cue = GameSequenceFactory.night(
+            round = 2,
+            color = NightColor.GREEN,
+            mode = GameMode.CONFIRMED,
+            departureSeconds = 45,
+            packCallVillagerLimit = 2,
+        ).first { it.id == "night_council_timer" }
+
+        assertEquals("Conseil des loups", cue.title)
+        assertEquals("commun_012_ambiance_nuit_boucle", cue.audioResource)
+        assertTrue(cue.loopAudio)
+        assertTrue(cue.replayable)
+    }
+
+    @Test
+    fun `beginner first council keeps ambience and replay`() {
+        val cue = GameSequenceFactory.night(
+            round = 1,
+            color = null,
+            mode = GameMode.BEGINNER,
+            departureSeconds = 45,
+            packCallVillagerLimit = 2,
+        ).first { it.id == "night_council_timer" }
+
+        assertEquals("Première nuit", cue.title)
+        assertEquals("commun_012_ambiance_nuit_boucle", cue.audioResource)
+        assertTrue(cue.loopAudio)
+        assertTrue(cue.replayable)
     }
 
     @Test(expected = IllegalArgumentException::class)

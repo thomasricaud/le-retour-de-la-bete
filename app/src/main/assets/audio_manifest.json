@@ -4,16 +4,16 @@
   "resource_directory": "app/src/main/res/raw",
   "file_extension": ".mp3",
   "flat_android_raw_directory": true,
-  "asset_count": 59,
+  "asset_count": 60,
   "timing_contract": {
     "departure_options_ms": [
       30000,
       45000
     ],
-    "departure_end_beeps_ms": 11000,
     "wolf_council_ms": 115000,
     "council_end_beeps_ms": 11000,
     "timer_loop_basename": "commun_012_ambiance_nuit_boucle",
+    "first_night_council_basename": "confirm_premiere_nuit",
     "phase_loop_basenames": {
       "night": "commun_012_ambiance_nuit_boucle",
       "day": "commun_013_ambiance_jour_boucle"
@@ -34,19 +34,19 @@
       "basename": "commun_001_nuit_depart_30",
       "filename": "commun_001_nuit_depart_30.mp3",
       "category": "commun",
-      "kind": "voice",
-      "motor_durations_ms": [7000],
+      "kind": "timer",
+      "motor_durations_ms": [30000],
       "loop": false,
-      "spoken_text": "C'est la nuit. Tous les villageois ont trente secondes pour regagner leurs habitations."
+      "spoken_text": "C'est la nuit, regagnez vos habitations."
     },
     {
       "basename": "commun_001_nuit_depart_45",
       "filename": "commun_001_nuit_depart_45.mp3",
       "category": "commun",
-      "kind": "voice",
-      "motor_durations_ms": [7000],
+      "kind": "timer",
+      "motor_durations_ms": [45000],
       "loop": false,
-      "spoken_text": "C'est la nuit. Tous les villageois ont quarante-cinq secondes pour regagner leurs habitations."
+      "spoken_text": "C'est la nuit, regagnez vos habitations."
     },
     {
       "basename": "commun_002_bips_11",
@@ -296,6 +296,15 @@
       "spoken_text": "Le loup garou remet la pierre récupérée dans le sac de guérison, puis part se recoucher. Le joueur mordu referme les yeux."
     },
     {
+      "basename": "confirm_premiere_nuit",
+      "filename": "confirm_premiere_nuit.mp3",
+      "category": "confirme",
+      "kind": "timer",
+      "motor_durations_ms": [115000],
+      "loop": false,
+      "spoken_text": "Le loup garou de sang se réveille et choisit sa première victime."
+    },
+    {
       "basename": "confirme_201_premiere_nuit_reveil_sang",
       "filename": "confirme_201_premiere_nuit_reveil_sang.mp3",
       "category": "confirme",
@@ -345,7 +354,7 @@
       "filename": "aides_401_synopsis.mp3",
       "category": "aides",
       "kind": "voice",
-      "motor_durations_ms": [55000],
+      "motor_durations_ms": [72000],
       "loop": false,
       "spoken_text": "Nous pensions les loups garous décimés, mais cette nuit, tous les villageois ont reconnu les hurlements d'une nouvelle bête, née des péchés de ce monde : un Alpha, venu transmettre son mal à l'un d'entre nous. Triste compagnon d'infortune, l'un de nous est maintenant devenu un loup garou de sang qui va chercher à tous nous transformer pour constituer une nouvelle meute. Mais, villageois ! Restons unis et confiants ! Depuis les tragiques événements de Thiercelieux, nous avons appris à reconnaître l'apparition du mal et à enrayer sa propagation. La guérison est possible. Il faudra juste reconnaître le loup garou de sang parmi nous… et te tuer, avant que tu ne t'empares de toutes nos âmes."
     },

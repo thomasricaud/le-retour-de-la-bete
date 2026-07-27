@@ -81,15 +81,15 @@ automatiquement la lecture guidée en pause.
 
 ## Séquence d'une nuit
 
-1. Annonce de la nuit.
-2. Déplacement vers les habitations pendant 30 ou 45 secondes.
-3. Onze bips.
-4. Endormissement.
-5. Première nuit : réveil du seul loup-garou de sang.
-6. Nuits suivantes : réveil des loups et des goules de la couleur tirée.
-7. En mode débutant, consignes détaillées de conseil et de morsure.
-8. Conseil nocturne de 1 minute 55.
-9. Onze bips, rendormissement, chant du coq et réveil du village.
+1. Piste de départ de 30 ou 45 secondes avec l'annonce « C'est la nuit,
+   regagnez vos habitations ».
+2. Nuits suivantes : réveil des loups et des goules de la couleur tirée.
+3. En mode débutant, consignes détaillées de conseil et de morsure.
+4. Conseil nocturne de 1 minute 55. La première nuit indique directement que
+   le loup garou de sang se réveille et choisit sa première victime. En mode
+   confirmé, la piste dédiée `confirm_premiere_nuit` est jouée sans boucle et
+   l'action « Répéter » n'est pas proposée sur cet écran.
+5. Onze bips, rendormissement, chant du coq et réveil du village.
 
 ## Choix techniques
 
