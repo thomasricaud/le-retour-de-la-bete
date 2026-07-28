@@ -9,8 +9,8 @@ val releaseKeystorePassword =
     providers.environmentVariable("ANDROID_KEYSTORE_PASSWORD").orNull
 val releaseKeyAlias = providers.environmentVariable("ANDROID_KEY_ALIAS").orNull
 val releaseKeyPassword = providers.environmentVariable("ANDROID_KEY_PASSWORD").orNull
-val appVersionCode = providers.gradleProperty("appVersionCode").map(String::toInt).orElse(4002)
-val appVersionName = providers.gradleProperty("appVersionName").orElse("0.4.2")
+val appVersionCode = providers.gradleProperty("appVersionCode").map(String::toInt).orElse(4003)
+val appVersionName = providers.gradleProperty("appVersionName").orElse("0.4.3")
 
 android {
     namespace = "fr.leretourdelabete"

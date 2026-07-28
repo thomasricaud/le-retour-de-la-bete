@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -364,18 +363,6 @@ private fun SetupScreen(
                                 Modifier.weight(1f),
                             )
                         }
-                        OptionLabel("Temps pour rejoindre les habitations")
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            listOf(30, 45).forEach { seconds ->
-                                ToggleChoice(
-                                    "$seconds SECONDES",
-                                    setup.departureSeconds == seconds,
-                                    { onUpdate { it.copy(departureSeconds = seconds) } },
-                                    Modifier.weight(1f),
-                                    accent = MoonYellow,
-                                )
-                            }
-                        }
                         OptionLabel("Durée de concertation du jour")
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             listOf(0, 3, 5, 8).forEach { minutes ->
@@ -402,48 +389,43 @@ private fun SetupScreen(
                             .weight(1f),
                     ) {
                         Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState()),
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxWidth()
-                                    .verticalScroll(rememberScrollState()),
-                            ) {
-                                MaterialSummary(
-                                    playerCount = setup.playerCount,
-                                    drawMode = setup.drawMode,
-                                )
-                            }
-                            HorizontalDivider(color = Parchment.copy(alpha = 0.25f))
+                            MaterialSummary(
+                                playerCount = setup.playerCount,
+                                drawMode = setup.drawMode,
+                            )
+                        }
+                    }
+                    GlassPanel(
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text(
+                                "Réglage BT",
+                                color = if (state.audioRoute.external) GhoulGreen else Parchment,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                            )
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Text(
-                                    if (state.audioRoute.external) {
-                                        "ENCEINTE DÉTECTÉE"
-                                    } else {
-                                        "SON DU TÉLÉPHONE"
-                                    },
-                                    color = if (state.audioRoute.external) GhoulGreen else Parchment,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.weight(0.8f),
+                                LargeActionButton(
+                                    label = "Réglages Bluetooth",
+                                    onClick = onBluetooth,
+                                    modifier = Modifier.weight(1f),
+                                    tone = ActionTone.SECONDARY,
+                                    iconRes = R.drawable.ic_bluetooth,
                                 )
                                 LargeActionButton(
-                                    "TESTER",
-                                    onTestSpeaker,
-                                    Modifier.weight(1f),
-                                    ActionTone.SECONDARY,
-                                )
-                                LargeActionButton(
-                                    "RÉGLAGES BT",
-                                    onBluetooth,
-                                    Modifier.weight(1f),
-                                    ActionTone.SECONDARY,
+                                    label = "TESTER",
+                                    onClick = onTestSpeaker,
+                                    modifier = Modifier.weight(1f),
+                                    tone = ActionTone.SECONDARY,
                                 )
                             }
                         }
@@ -606,23 +588,23 @@ private fun MaterialSummary(
         )
         ObjectiveLine(
             role = "Villageois (pierre bleue) : ",
-            objective = "découvrir le loup garou de sang en votant pour sa guérison " +
+            objective = "découvrir le loup-garou de sang en votant pour sa guérison " +
                 "lors du conseil des villageois (le jour).",
         )
         ObjectiveLine(
-            role = "Loup garou de sang (pierre rouge) : ",
+            role = "Loup-garou de sang (pierre rouge) : ",
             objective = "appeler « sa meute, ses adorateurs » lors du conseil des loups " +
                 "(la nuit) quand il ne reste plus que $packCallVillagerLimit " +
                 "villageois ou moins.",
         )
         ObjectiveLine(
-            role = "Loup garou (pierre violette) : ",
-            objective = "aider le loup garou de sang pour gagner avec lui (si c'est le " +
+            role = "Loup-garou (pierre violette) : ",
+            objective = "aider le loup-garou de sang pour gagner avec lui (si c'est le " +
                 "village qui gagne, votre victoire est incertaine).",
         )
         ObjectiveLine(
             role = "Goule (pierre jaune ou verte) : ",
-            objective = "aider le loup garou de sang pour gagner avec lui (dans tous les " +
+            objective = "aider le loup-garou de sang pour gagner avec lui (dans tous les " +
                 "cas, votre victoire est incertaine).",
         )
     }

@@ -52,13 +52,13 @@ non bloquante vérifie uniquement la dernière release GitHub au démarrage.
 - Téléchargement suivi par le gestionnaire Android lorsqu'une release GitHub
   plus récente existe, puis proposition d'ouvrir l'installateur ; sans
   connexion, l'application démarre normalement et n'affiche aucune erreur.
-- Le catalogue prévoit 60 ressources audio. L'ambiance nocturne tourne en
+- Le catalogue prévoit 62 ressources audio. L'ambiance nocturne tourne en
   continu pendant toute la nuit et l'ambiance de village diurne, sans voix,
   pendant tout le jour. Les consignes et effets (notamment le cocorico) sont
   joués simultanément au premier plan. Une ressource absente est remplacée par
   son texte affiché, sans bloquer la partie.
 
-Le catalogue complet des 60 enregistrements attendus se trouve dans
+Le catalogue complet des 62 enregistrements attendus se trouve dans
 [`docs/AUDIO_ASSETS.md`](docs/AUDIO_ASSETS.md). Le manifeste exploitable par un
 outil de production se trouve dans
 [`app/src/main/assets/audio_manifest.json`](app/src/main/assets/audio_manifest.json).

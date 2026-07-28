@@ -30,6 +30,13 @@ enum class DayStage {
     DISCUSSION,
     COUNCIL,
     HEALING,
+    HEALING_EFFECT,
+}
+
+enum class HealingOutcome {
+    VILLAGER,
+    GHOUL,
+    WEREWOLF,
 }
 
 enum class EndReason {
@@ -43,7 +50,6 @@ data class SetupOptions(
     val playerCount: Int = 6,
     val mode: GameMode = GameMode.BEGINNER,
     val drawMode: DrawMode = DrawMode.APPLICATION,
-    val departureSeconds: Int = 45,
     val dayDurationMinutes: Int = 5,
 )
 
@@ -53,7 +59,6 @@ data class GameSession(
     val drawMode: DrawMode = DrawMode.APPLICATION,
     val playerCount: Int = 6,
     val packCallVillagerLimit: Int = 2,
-    val departureSeconds: Int = 45,
     val dayDurationMinutes: Int = 5,
     val round: Int = 1,
     val currentNightColor: NightColor? = null,
@@ -62,6 +67,7 @@ data class GameSession(
     val cueIndex: Int = 0,
     val cueRemainingMillis: Long = 0L,
     val dayStage: DayStage = DayStage.DISCUSSION,
+    val healingOutcome: HealingOutcome? = null,
     val dayRemainingMillis: Long = 5 * 60_000L,
     val endReason: EndReason? = null,
 ) {

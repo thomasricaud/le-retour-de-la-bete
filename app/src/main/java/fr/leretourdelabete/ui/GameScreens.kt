@@ -1,5 +1,7 @@
 package fr.leretourdelabete.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,8 +12,10 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -24,18 +28,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.leretourdelabete.GameUiState
 import fr.leretourdelabete.GameViewModel
+import fr.leretourdelabete.domain.ConfirmedFirstNightTimeline
 import fr.leretourdelabete.domain.GameSequenceFactory
+import fr.leretourdelabete.domain.HealingEffectRules
 import fr.leretourdelabete.model.DayStage
 import fr.leretourdelabete.model.DrawMode
 import fr.leretourdelabete.model.EndReason
+import fr.leretourdelabete.model.GameMode
 import fr.leretourdelabete.model.GameScreen
+import fr.leretourdelabete.model.HealingOutcome
 import fr.leretourdelabete.model.NightColor
 import fr.leretourdelabete.ui.theme.BloodRedBright
 import fr.leretourdelabete.ui.theme.Bone
@@ -113,7 +124,7 @@ fun SequenceScreen(
                             Text(
                                 "La première nuit est spéciale : seul le loup-garou de sang " +
                                     "se réveille pour partir mordre un villageois qui deviendra " +
-                                    "loup garou.",
+                                    "loup-garou.",
                                 color = Parchment,
                                 textAlign = TextAlign.Center,
                                 style = MaterialTheme.typography.bodyLarge,
@@ -181,6 +192,24 @@ private fun ColumnScope.SequenceController(
     onStop: () -> Unit,
 ) {
     val cue = state.currentCue
+    val isConfirmedFirstNight = cue?.id == ConfirmedFirstNightTimeline.CUE_ID
+    val firstNightPresentation = if (isConfirmedFirstNight) {
+        ConfirmedFirstNightTimeline.presentation(state.cueRemainingMillis)
+    } else {
+        null
+    }
+    val canReplay = cue?.replayable == true && (
+        !isConfirmedFirstNight ||
+            ConfirmedFirstNightTimeline.canReplay(state.cueRemainingMillis)
+        )
+    val skipLabel = if (
+        isConfirmedFirstNight &&
+        ConfirmedFirstNightTimeline.advanceTarget(state.cueRemainingMillis) != null
+    ) {
+        "AVANCER"
+    } else {
+        "PASSER"
+    }
     val progress = if (state.cueTotalMillis > 0L) {
         1f - state.cueRemainingMillis.toFloat() / state.cueTotalMillis.toFloat()
     } else {
@@ -205,14 +234,14 @@ private fun ColumnScope.SequenceController(
                 verticalArrangement = Arrangement.Center,
             ) {
                 Text(
-                    cue?.title.orEmpty(),
+                    firstNightPresentation?.title ?: cue?.title.orEmpty(),
                     style = MaterialTheme.typography.displayMedium,
                     color = Bone,
                     textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(14.dp))
                 Text(
-                    cue?.text.orEmpty(),
+                    firstNightPresentation?.text ?: cue?.text.orEmpty(),
                     style = MaterialTheme.typography.bodyLarge,
                     color = Parchment,
                     textAlign = TextAlign.Center,
@@ -247,7 +276,7 @@ private fun ColumnScope.SequenceController(
                 .fillMaxHeight(0.9f),
             verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
         ) {
-            if (cue?.replayable == true) {
+            if (canReplay) {
                 LargeActionButton(
                     "RÉPÉTER",
                     onReplay,
@@ -261,7 +290,7 @@ private fun ColumnScope.SequenceController(
                 Modifier.fillMaxWidth(),
             )
             LargeActionButton(
-                "PASSER",
+                skipLabel,
                 onSkip,
                 Modifier.fillMaxWidth(),
                 ActionTone.SECONDARY,
@@ -319,16 +348,22 @@ fun DayScreen(
                     .fillMaxWidth(),
                 contentAlignment = Alignment.Center,
             ) {
-                GlassPanel(
-                    modifier = Modifier
-                        .fillMaxWidth(0.82f)
-                        .fillMaxHeight(),
-                    containerAlpha = 0.6f,
-                ) {
-                    when (session.dayStage) {
-                        DayStage.DISCUSSION -> DiscussionStage(state, viewModel)
-                        DayStage.COUNCIL -> CouncilStage(viewModel)
-                        DayStage.HEALING -> HealingStage(viewModel)
+                when (session.dayStage) {
+                    DayStage.HEALING -> HealingStage(state, viewModel)
+                    else -> {
+                        GlassPanel(
+                            modifier = Modifier
+                                .fillMaxWidth(0.82f)
+                                .fillMaxHeight(),
+                            containerAlpha = 0.6f,
+                        ) {
+                            when (session.dayStage) {
+                                DayStage.DISCUSSION -> DiscussionStage(state, viewModel)
+                                DayStage.COUNCIL -> CouncilStage(state, viewModel)
+                                DayStage.HEALING_EFFECT -> HealingEffectStage(state, viewModel)
+                                DayStage.HEALING -> Unit
+                            }
+                        }
                     }
                 }
             }
@@ -363,8 +398,8 @@ private fun DiscussionStage(
         Text("Concertation du village", style = MaterialTheme.typography.displayMedium)
         Spacer(Modifier.height(10.dp))
         Text(
-            "Échangez librement, en groupe ou séparément. Observez les bruits, les absences " +
-                "et les contradictions de la nuit.",
+            "Qui est suspect ? Qui est le loup-garou de sang ? " +
+                "Échangez librement, en groupe ou séparément.",
             color = Parchment,
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodyLarge,
@@ -381,29 +416,38 @@ private fun DiscussionStage(
             fontWeight = FontWeight.Bold,
         )
         Spacer(Modifier.height(14.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(0.96f),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
             if (state.session.dayDurationMinutes > 0) {
                 LargeActionButton(
                     if (state.dayTimerPlaying) "PAUSE" else "DÉMARRER",
                     viewModel::startOrPauseDayTimer,
+                    modifier = Modifier.weight(1f),
                     tone = ActionTone.SECONDARY,
                 )
                 LargeActionButton(
                     "RECOMMENCER",
                     viewModel::resetDayTimer,
+                    modifier = Modifier.weight(1f),
                     tone = ActionTone.SECONDARY,
                 )
             }
             LargeActionButton(
                 "PASSER AU CONSEIL",
                 viewModel::advanceDayStage,
+                modifier = Modifier.weight(1.25f),
             )
         }
     }
 }
 
 @Composable
-private fun CouncilStage(viewModel: GameViewModel) {
+private fun CouncilStage(
+    state: GameUiState,
+    viewModel: GameViewModel,
+) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -412,8 +456,17 @@ private fun CouncilStage(viewModel: GameViewModel) {
         Text("Conseil des villageois", style = MaterialTheme.typography.displayMedium)
         Spacer(Modifier.height(12.dp))
         Text(
-            "Réunissez tous les joueurs. Organisez le vote selon les modalités décidées au " +
-                "début de la partie, y compris en cas d'égalité.",
+            "Qui doit subir le rituel de guérison ?",
+            color = Parchment,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.fillMaxWidth(0.78f),
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "Tous les joueurs se réunissent pour choisir un joueur à guérir. Votez selon " +
+                "les modalités décidées en début de partie, y compris en cas d'égalité.",
             color = Parchment,
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodyLarge,
@@ -421,11 +474,13 @@ private fun CouncilStage(viewModel: GameViewModel) {
         )
         Spacer(Modifier.height(20.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            LargeActionButton(
-                "ÉCOUTER L'ANNONCE",
-                { viewModel.playHelp(GameSequenceFactory.dayCue("council")) },
-                tone = ActionTone.SECONDARY,
-            )
+            if (state.session.mode == GameMode.BEGINNER) {
+                LargeActionButton(
+                    "ÉCOUTER L'ANNONCE",
+                    { viewModel.playHelp(GameSequenceFactory.dayCue("council")) },
+                    tone = ActionTone.SECONDARY,
+                )
+            }
             LargeActionButton(
                 "PROCÉDER À LA GUÉRISON",
                 viewModel::advanceDayStage,
@@ -435,39 +490,136 @@ private fun CouncilStage(viewModel: GameViewModel) {
 }
 
 @Composable
-private fun HealingStage(viewModel: GameViewModel) {
+private fun HealingStage(
+    state: GameUiState,
+    viewModel: GameViewModel,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth(0.92f)
+            .fillMaxHeight(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        GlassPanel(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
+            containerAlpha = 0.6f,
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text("Rituel de guérison", style = MaterialTheme.typography.displayMedium)
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "Pendant le rituel, le joueur choisi révèle sa pierre. Indiquez alors " +
+                        "quel était son rôle.",
+                    color = Parchment,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.fillMaxWidth(0.82f),
+                )
+                if (state.session.mode == GameMode.BEGINNER) {
+                    Spacer(Modifier.height(20.dp))
+                    LargeActionButton(
+                        "ÉCOUTER L'ANNONCE",
+                        { viewModel.playHelp(GameSequenceFactory.dayCue("healing")) },
+                        tone = ActionTone.SECONDARY,
+                    )
+                }
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .width(230.dp)
+                .fillMaxHeight(),
+            verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
+        ) {
+            HealingChoiceButton(
+                label = "VILLAGEOIS",
+                colors = listOf(Color(0xFF2364A3)),
+                onClick = { viewModel.showHealingEffect(HealingOutcome.VILLAGER) },
+            )
+            if (HealingEffectRules.isGhoulOptionAvailable(state.session.round)) {
+                HealingChoiceButton(
+                    label = "GOULE",
+                    colors = listOf(MoonYellow, GhoulGreen),
+                    onClick = { viewModel.showHealingEffect(HealingOutcome.GHOUL) },
+                )
+            }
+            HealingChoiceButton(
+                label = "LOUP-GAROU",
+                colors = listOf(Color(0xFF6C3FA0)),
+                onClick = { viewModel.showHealingEffect(HealingOutcome.WEREWOLF) },
+            )
+            HealingChoiceButton(
+                label = "LOUP DE SANG DÉCOUVERT",
+                colors = listOf(Color(0xFF6F1922)),
+                onClick = { viewModel.finishGame(EndReason.BLOOD_WOLF_FOUND) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun HealingEffectStage(
+    state: GameUiState,
+    viewModel: GameViewModel,
+) {
+    val text = HealingEffectRules.text(state.session.healingOutcome)
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text("Rituel de guérison", style = MaterialTheme.typography.displayMedium)
-        Spacer(Modifier.height(12.dp))
+        Text("Effet de la guérison", style = MaterialTheme.typography.displayMedium)
+        Spacer(Modifier.height(14.dp))
         Text(
-            "Le joueur choisi révèle seulement sa pierre au moment prévu et applique la règle " +
-                "correspondante. L'application ne demande ni son nom ni son rôle.",
+            text,
             color = Parchment,
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.fillMaxWidth(0.78f),
+            modifier = Modifier.fillMaxWidth(0.86f),
         )
-        Spacer(Modifier.height(20.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            LargeActionButton(
-                "ÉCOUTER L'ANNONCE",
-                { viewModel.playHelp(GameSequenceFactory.dayCue("healing")) },
-                tone = ActionTone.SECONDARY,
-            )
-            LargeActionButton(
-                "LA PARTIE CONTINUE",
-                viewModel::continueAfterHealing,
-            )
-            LargeActionButton(
-                "LOUP DE SANG DÉCOUVERT",
-                { viewModel.finishGame(EndReason.BLOOD_WOLF_FOUND) },
-                tone = ActionTone.DANGER,
-            )
-        }
+        Spacer(Modifier.height(22.dp))
+        LargeActionButton(
+            "LA PARTIE CONTINUE",
+            viewModel::continueAfterHealing,
+        )
+    }
+}
+
+@Composable
+private fun HealingChoiceButton(
+    label: String,
+    colors: List<Color>,
+    onClick: () -> Unit,
+) {
+    val gradientColors = if (colors.size == 1) {
+        listOf(colors.first(), colors.first())
+    } else {
+        colors
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 58.dp)
+            .clip(RoundedCornerShape(15.dp))
+            .background(Brush.horizontalGradient(gradientColors))
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 14.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            color = Color.White,
+            style = MaterialTheme.typography.labelLarge,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 

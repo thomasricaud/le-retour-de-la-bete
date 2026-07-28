@@ -14,7 +14,6 @@ class GameSequenceFactoryTest {
             round = 1,
             color = null,
             mode = GameMode.BEGINNER,
-            departureSeconds = 45,
             packCallVillagerLimit = 2,
         )
 
@@ -30,14 +29,12 @@ class GameSequenceFactoryTest {
             round = 2,
             color = NightColor.YELLOW,
             mode = GameMode.CONFIRMED,
-            departureSeconds = 45,
             packCallVillagerLimit = 2,
         )
         val green = GameSequenceFactory.night(
             round = 2,
             color = NightColor.GREEN,
             mode = GameMode.CONFIRMED,
-            departureSeconds = 45,
             packCallVillagerLimit = 2,
         )
 
@@ -53,14 +50,12 @@ class GameSequenceFactoryTest {
             round = 3,
             color = NightColor.GREEN,
             mode = GameMode.BEGINNER,
-            departureSeconds = 45,
             packCallVillagerLimit = 2,
         )
         val confirmed = GameSequenceFactory.night(
             round = 3,
             color = NightColor.GREEN,
             mode = GameMode.CONFIRMED,
-            departureSeconds = 45,
             packCallVillagerLimit = 2,
         )
 
@@ -80,67 +75,168 @@ class GameSequenceFactoryTest {
     }
 
     @Test
-    fun `departure setting controls one timer with matching soundtrack`() {
-        val short = GameSequenceFactory.night(
+    fun `departure is always 45 seconds outside confirmed first night`() {
+        val beginnerFirstNight = GameSequenceFactory.night(
             round = 1,
             color = null,
-            mode = GameMode.CONFIRMED,
-            departureSeconds = 30,
+            mode = GameMode.BEGINNER,
             packCallVillagerLimit = 2,
         )
-        val long = GameSequenceFactory.night(
-            round = 1,
-            color = null,
+        val confirmedLaterNight = GameSequenceFactory.night(
+            round = 2,
+            color = NightColor.YELLOW,
             mode = GameMode.CONFIRMED,
-            departureSeconds = 45,
             packCallVillagerLimit = 2,
         )
 
-        assertEquals(
-            30_000L,
-            short.first { it.id == "night_departure_timer" }.fallbackDurationMillis,
-        )
-        assertEquals(
-            "commun_001_nuit_depart_30",
-            short.first { it.id == "night_departure_timer" }.audioResource,
-        )
-        assertEquals(
-            45_000L,
-            long.first { it.id == "night_departure_timer" }.fallbackDurationMillis,
-        )
-        assertEquals(
-            "commun_001_nuit_depart_45",
-            long.first { it.id == "night_departure_timer" }.audioResource,
-        )
-        assertTrue(
-            short.first { it.id == "night_departure_timer" }.text ==
-                "C'est la nuit, regagnez vos habitations.",
-        )
-        listOf("night_departure", "night_first_beeps", "night_sleep", "night_first_wake")
-            .forEach { removedId ->
-                assertFalse(short.any { it.id == removedId })
-                assertFalse(long.any { it.id == removedId })
-            }
+        listOf(beginnerFirstNight, confirmedLaterNight).forEach { cues ->
+            val departure = cues.first { it.id == "night_departure_timer" }
+            assertEquals(45_000L, departure.fallbackDurationMillis)
+            assertEquals("commun_012_ambiance_nuit_boucle", departure.audioResource)
+            assertTrue("45 secondes" in departure.text)
+        }
     }
 
     @Test
-    fun `first council screen carries the requested first night wording`() {
+    fun `confirmed first night is one continuous 152 second cue`() {
+        val cues = GameSequenceFactory.night(
+            round = 1,
+            color = null,
+            mode = GameMode.CONFIRMED,
+            packCallVillagerLimit = 2,
+        )
+
+        assertEquals(listOf(ConfirmedFirstNightTimeline.CUE_ID), cues.map { it.id })
+        val cue = cues.single()
+        assertEquals(152_000L, cue.fallbackDurationMillis)
+        assertEquals("premiere_nuit", cue.audioResource)
+        assertEquals(CueKind.TIMER, cue.kind)
+        assertFalse(cue.loopAudio)
+        assertTrue(cue.replayable)
+    }
+
+    @Test
+    fun `confirmed first night presentation follows all six boundaries`() {
+        val samples = listOf(
+            152_000L to "Regagnez vos habitations",
+            122_000L to "Restez calme, préparez-vous à dormir",
+            107_000L to "Fermez les yeux",
+            93_000L to "Le loup-garou de sang se réveille",
+            30_000L to "Le jour va bientôt se lever",
+            5_000L to "Réveillez-vous",
+        )
+
+        samples.forEach { (remaining, title) ->
+            assertEquals(title, ConfirmedFirstNightTimeline.presentation(remaining).title)
+        }
+        assertTrue(
+            "30 secondes" in ConfirmedFirstNightTimeline.presentation(152_000L).text,
+        )
+        assertTrue(
+            "15 secondes" in ConfirmedFirstNightTimeline.presentation(122_000L).text,
+        )
+        assertTrue(
+            "25 secondes" in ConfirmedFirstNightTimeline.presentation(30_000L).text,
+        )
+    }
+
+    @Test
+    fun `confirmed first night advance targets select supplied replacement tracks`() {
+        val targets = listOf(
+            152_000L to 122_000L,
+            122_000L to 107_000L,
+            107_000L to 30_000L,
+            93_000L to 30_000L,
+            30_000L to 5_000L,
+        )
+        targets.forEach { (remaining, target) ->
+            assertEquals(target, ConfirmedFirstNightTimeline.advanceTarget(remaining))
+        }
+        assertEquals(null, ConfirmedFirstNightTimeline.advanceTarget(5_000L))
+
+        assertEquals(
+            "premiere_nuit_avance_gong",
+            ConfirmedFirstNightTimeline.playback(122_000L).audioResource,
+        )
+        assertEquals(
+            "premiere_nuit_avance_fermez_yeux",
+            ConfirmedFirstNightTimeline.playback(107_000L).audioResource,
+        )
+        assertEquals(
+            "nuit_avance_fin_nuit",
+            ConfirmedFirstNightTimeline.playback(30_000L).audioResource,
+        )
+        assertEquals(
+            "nuit_avance_cocorico",
+            ConfirmedFirstNightTimeline.playback(5_000L).audioResource,
+        )
+        assertTrue(ConfirmedFirstNightTimeline.canReplay(152_000L))
+        assertFalse(ConfirmedFirstNightTimeline.canReplay(122_000L))
+    }
+
+    @Test
+    fun `legacy first night steps are absent from confirmed flow`() {
+        val cues = GameSequenceFactory.night(
+            round = 1,
+            color = null,
+            mode = GameMode.CONFIRMED,
+            packCallVillagerLimit = 2,
+        )
+
+        listOf(
+            "night_departure_timer",
+            "night_council_timer",
+            "night_second_beeps",
+            "night_sleep_again",
+            "night_rooster",
+            "night_village_wake",
+        ).forEach { removedId ->
+            assertFalse(cues.any { it.id == removedId })
+        }
+    }
+
+    @Test
+    fun `confirmed first night no longer references retired resources`() {
         val cue = GameSequenceFactory.night(
             round = 1,
             color = null,
             mode = GameMode.CONFIRMED,
-            departureSeconds = 45,
+            packCallVillagerLimit = 2,
+        ).single()
+
+        listOf(
+            "commun_001_nuit_depart_30",
+            "commun_001_nuit_depart_45",
+            "confirm_premiere_nuit",
+        ).forEach { retired ->
+            assertFalse(cue.audioResource == retired)
+        }
+    }
+
+    @Test
+    fun `first council screen remains available in beginner mode`() {
+        val cue = GameSequenceFactory.night(
+            round = 1,
+            color = null,
+            mode = GameMode.BEGINNER,
             packCallVillagerLimit = 2,
         ).first { it.id == "night_council_timer" }
 
         assertEquals("Première nuit", cue.title)
+        assertEquals("commun_012_ambiance_nuit_boucle", cue.audioResource)
+        assertTrue(cue.loopAudio)
+        assertTrue(cue.replayable)
+    }
+
+    @Test
+    fun `intro synopsis uses the shortened requested text`() {
+        val synopsis = GameSequenceFactory.intro(GameMode.CONFIRMED).single()
+
         assertEquals(
-            "Le loup garou de sang se réveille et choisit sa première victime.",
-            cue.text,
+            "Villageois, restez unis : reconnaissez le loup-garou de sang " +
+                "avant qu'il ne s'empare de toutes nos âmes.",
+            synopsis.text,
         )
-        assertEquals("confirm_premiere_nuit", cue.audioResource)
-        assertFalse(cue.loopAudio)
-        assertFalse(cue.replayable)
     }
 
     @Test
@@ -149,7 +245,6 @@ class GameSequenceFactoryTest {
             round = 2,
             color = NightColor.GREEN,
             mode = GameMode.CONFIRMED,
-            departureSeconds = 45,
             packCallVillagerLimit = 2,
         ).first { it.id == "night_council_timer" }
 
@@ -165,7 +260,6 @@ class GameSequenceFactoryTest {
             round = 1,
             color = null,
             mode = GameMode.BEGINNER,
-            departureSeconds = 45,
             packCallVillagerLimit = 2,
         ).first { it.id == "night_council_timer" }
 
@@ -181,7 +275,6 @@ class GameSequenceFactoryTest {
             round = 2,
             color = null,
             mode = GameMode.CONFIRMED,
-            departureSeconds = 45,
             packCallVillagerLimit = 2,
         )
     }
@@ -192,7 +285,6 @@ class GameSequenceFactoryTest {
             round = 2,
             color = NightColor.YELLOW,
             mode = GameMode.BEGINNER,
-            departureSeconds = 45,
             packCallVillagerLimit = 3,
         )
 

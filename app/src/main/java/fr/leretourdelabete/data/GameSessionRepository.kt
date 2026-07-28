@@ -8,6 +8,7 @@ import fr.leretourdelabete.model.EndReason
 import fr.leretourdelabete.model.GameMode
 import fr.leretourdelabete.model.GameScreen
 import fr.leretourdelabete.model.GameSession
+import fr.leretourdelabete.model.HealingOutcome
 import fr.leretourdelabete.model.NightColor
 
 class GameSessionRepository(context: Context) {
@@ -20,7 +21,6 @@ class GameSessionRepository(context: Context) {
             .putString(KEY_DRAW_MODE, session.drawMode.name)
             .putInt(KEY_PLAYERS, session.playerCount)
             .putInt(KEY_PACK_CALL_VILLAGER_LIMIT, session.packCallVillagerLimit)
-            .putInt(KEY_DEPARTURE_SECONDS, session.departureSeconds)
             .putInt(KEY_DAY_MINUTES, session.dayDurationMinutes)
             .putInt(KEY_ROUND, session.round)
             .putString(KEY_CURRENT_COLOR, session.currentNightColor?.name)
@@ -29,6 +29,7 @@ class GameSessionRepository(context: Context) {
             .putInt(KEY_CUE_INDEX, session.cueIndex)
             .putLong(KEY_CUE_REMAINING, session.cueRemainingMillis)
             .putString(KEY_DAY_STAGE, session.dayStage.name)
+            .putString(KEY_HEALING_OUTCOME, session.healingOutcome?.name)
             .putLong(KEY_DAY_REMAINING, session.dayRemainingMillis)
             .putString(KEY_END_REASON, session.endReason?.name)
             .apply()
@@ -60,8 +61,6 @@ class GameSessionRepository(context: Context) {
             ),
             playerCount = playerCount,
             packCallVillagerLimit = packCallVillagerLimit,
-            departureSeconds = preferences.getInt(KEY_DEPARTURE_SECONDS, 45)
-                .takeIf { it == 30 || it == 45 } ?: 45,
             dayDurationMinutes = preferences.getInt(KEY_DAY_MINUTES, 5)
                 .coerceIn(0, 30),
             round = preferences.getInt(KEY_ROUND, 1).coerceAtLeast(1),
@@ -79,12 +78,26 @@ class GameSessionRepository(context: Context) {
                 preferences.getString(KEY_DAY_STAGE, null),
                 DayStage.DISCUSSION,
             ),
+            healingOutcome = enumValueOrNull<HealingOutcome>(
+                preferences.getString(KEY_HEALING_OUTCOME, null),
+            ),
             dayRemainingMillis = preferences.getLong(KEY_DAY_REMAINING, 5 * 60_000L)
                 .coerceAtLeast(0L),
             endReason = enumValueOrNull<EndReason>(
                 preferences.getString(KEY_END_REASON, null),
             ),
-        )
+        ).let { loaded ->
+            if (
+                loaded.screen == GameScreen.NIGHT &&
+                loaded.round == 1 &&
+                loaded.mode == GameMode.CONFIRMED &&
+                loaded.cueIndex > 0
+            ) {
+                loaded.copy(cueIndex = 0, cueRemainingMillis = 0L)
+            } else {
+                loaded
+            }
+        }
     }
 
     fun hasResumableSession(): Boolean = load()?.isResumable == true
@@ -117,7 +130,6 @@ class GameSessionRepository(context: Context) {
         const val KEY_DRAW_MODE = "draw_mode"
         const val KEY_PLAYERS = "players"
         const val KEY_PACK_CALL_VILLAGER_LIMIT = "pack_call_villager_limit"
-        const val KEY_DEPARTURE_SECONDS = "departure_seconds"
         const val KEY_DAY_MINUTES = "day_minutes"
         const val KEY_ROUND = "round"
         const val KEY_CURRENT_COLOR = "current_color"
@@ -126,6 +138,7 @@ class GameSessionRepository(context: Context) {
         const val KEY_CUE_INDEX = "cue_index"
         const val KEY_CUE_REMAINING = "cue_remaining"
         const val KEY_DAY_STAGE = "day_stage"
+        const val KEY_HEALING_OUTCOME = "healing_outcome"
         const val KEY_DAY_REMAINING = "day_remaining"
         const val KEY_END_REASON = "end_reason"
     }

@@ -21,6 +21,102 @@ data class GameCue(
     val replayable: Boolean = true,
 )
 
+data class FirstNightPresentation(
+    val title: String,
+    val text: String,
+)
+
+data class FirstNightPlayback(
+    val audioResource: String,
+    val seekMillis: Long,
+)
+
+object ConfirmedFirstNightTimeline {
+    const val CUE_ID = "confirmed_first_night"
+    const val TOTAL_MILLIS = 152_000L
+    const val AFTER_HABITATIONS_MILLIS = 122_000L
+    const val AFTER_PREPARATION_MILLIS = 107_000L
+    const val AFTER_EYES_CLOSED_MILLIS = 93_000L
+    const val BEFORE_SUNRISE_MILLIS = 30_000L
+    const val WAKE_UP_MILLIS = 5_000L
+
+    fun presentation(remainingMillis: Long): FirstNightPresentation {
+        val remaining = remainingMillis.coerceIn(0L, TOTAL_MILLIS)
+        return when {
+            remaining > AFTER_HABITATIONS_MILLIS -> FirstNightPresentation(
+                title = "Regagnez vos habitations",
+                text = "Vous avez ${secondsUntil(remaining, AFTER_HABITATIONS_MILLIS)} secondes " +
+                    "pour vous asseoir ou vous allonger.",
+            )
+            remaining > AFTER_PREPARATION_MILLIS -> FirstNightPresentation(
+                title = "Restez calme, préparez-vous à dormir",
+                text = "Dans ${secondsUntil(remaining, AFTER_PREPARATION_MILLIS)} secondes " +
+                    "il faudra obligatoirement fermer les yeux.",
+            )
+            remaining > AFTER_EYES_CLOSED_MILLIS -> FirstNightPresentation(
+                title = "Fermez les yeux",
+                text = "",
+            )
+            remaining > BEFORE_SUNRISE_MILLIS -> FirstNightPresentation(
+                title = "Le loup-garou de sang se réveille",
+                text = "Prenez une pierre violette dans la boîte des loups pour l'échanger " +
+                    "avec la pierre bleue de votre victime. Rangez la pierre bleue récupérée " +
+                    "dans le sac de guérison. Retournez dormir.",
+            )
+            remaining > WAKE_UP_MILLIS -> FirstNightPresentation(
+                title = "Le jour va bientôt se lever",
+                text = "Attention, vous n'avez plus que " +
+                    "${secondsUntil(remaining, WAKE_UP_MILLIS)} secondes pour regagner votre " +
+                    "habitation et fermer les yeux !",
+            )
+            else -> FirstNightPresentation(
+                title = "Réveillez-vous",
+                text = "",
+            )
+        }
+    }
+
+    fun playback(remainingMillis: Long): FirstNightPlayback {
+        val remaining = remainingMillis.coerceIn(0L, TOTAL_MILLIS)
+        return when {
+            remaining > AFTER_HABITATIONS_MILLIS -> FirstNightPlayback(
+                audioResource = "premiere_nuit",
+                seekMillis = TOTAL_MILLIS - remaining,
+            )
+            remaining > AFTER_PREPARATION_MILLIS -> FirstNightPlayback(
+                audioResource = "premiere_nuit_avance_gong",
+                seekMillis = AFTER_HABITATIONS_MILLIS - remaining,
+            )
+            remaining > BEFORE_SUNRISE_MILLIS -> FirstNightPlayback(
+                audioResource = "premiere_nuit_avance_fermez_yeux",
+                seekMillis = AFTER_PREPARATION_MILLIS - remaining,
+            )
+            remaining > WAKE_UP_MILLIS -> FirstNightPlayback(
+                audioResource = "nuit_avance_fin_nuit",
+                seekMillis = BEFORE_SUNRISE_MILLIS - remaining,
+            )
+            else -> FirstNightPlayback(
+                audioResource = "nuit_avance_cocorico",
+                seekMillis = WAKE_UP_MILLIS - remaining,
+            )
+        }
+    }
+
+    fun advanceTarget(remainingMillis: Long): Long? = when {
+        remainingMillis > AFTER_HABITATIONS_MILLIS -> AFTER_HABITATIONS_MILLIS
+        remainingMillis > AFTER_PREPARATION_MILLIS -> AFTER_PREPARATION_MILLIS
+        remainingMillis > BEFORE_SUNRISE_MILLIS -> BEFORE_SUNRISE_MILLIS
+        remainingMillis > WAKE_UP_MILLIS -> WAKE_UP_MILLIS
+        else -> null
+    }
+
+    fun canReplay(remainingMillis: Long): Boolean =
+        remainingMillis > AFTER_HABITATIONS_MILLIS
+
+    private fun secondsUntil(remainingMillis: Long, boundaryMillis: Long): Long =
+        ((remainingMillis - boundaryMillis).coerceAtLeast(0L) + 999L) / 1_000L
+}
+
 object GameSequenceFactory {
     fun intro(mode: GameMode): List<GameCue> = buildList {
         add(
@@ -29,10 +125,8 @@ object GameSequenceFactory {
                 title = "Le retour de la Bête",
                 audio = "aides_401_synopsis",
                 seconds = 72,
-                text = "Nous pensions les loups-garous décimés. Mais cette nuit, " +
-                    "une nouvelle Bête est venue transmettre son mal à l'un d'entre nous. " +
-                    "Villageois, restez unis : reconnaissez le loup-garou de sang avant " +
-                    "qu'il ne transforme tout le village.",
+                text = "Villageois, restez unis : reconnaissez le loup-garou de sang " +
+                    "avant qu'il ne s'empare de toutes nos âmes.",
             ),
         )
         if (mode == GameMode.BEGINNER) {
@@ -75,23 +169,29 @@ object GameSequenceFactory {
         round: Int,
         color: NightColor?,
         mode: GameMode,
-        departureSeconds: Int,
         packCallVillagerLimit: Int,
     ): List<GameCue> = buildList {
-        val departureAudio = if (departureSeconds == 30) {
-            "commun_001_nuit_depart_30"
-        } else {
-            "commun_001_nuit_depart_45"
+        if (round == 1 && mode == GameMode.CONFIRMED) {
+            add(
+                timer(
+                    id = ConfirmedFirstNightTimeline.CUE_ID,
+                    title = "Regagnez vos habitations",
+                    text = "Vous avez 30 secondes pour vous asseoir ou vous allonger.",
+                    audio = "premiere_nuit",
+                    seconds = 152,
+                    loopAudio = false,
+                ),
+            )
+            return@buildList
         }
-        val useConfirmedFirstNightAudio =
-            round == 1 && mode == GameMode.CONFIRMED
+
         add(
             timer(
                 id = "night_departure_timer",
                 title = "Regagnez vos habitations",
-                text = "C'est la nuit, regagnez vos habitations.",
-                audio = departureAudio,
-                seconds = departureSeconds,
+                text = "Vous avez 45 secondes pour vous asseoir ou vous allonger.",
+                audio = "commun_012_ambiance_nuit_boucle",
+                seconds = 45,
             ),
         )
 
@@ -118,18 +218,14 @@ object GameSequenceFactory {
                     "Conseil des loups"
                 },
                 text = if (round == 1) {
-                    "Le loup garou de sang se réveille et choisit sa première victime."
+                    "Le loup-garou de sang se réveille et choisit sa première victime."
                 } else {
                     "La meute s'identifie, choisit le mordeur puis sa victime."
                 },
-                audio = if (useConfirmedFirstNightAudio) {
-                    "confirm_premiere_nuit"
-                } else {
-                    "commun_012_ambiance_nuit_boucle"
-                },
+                audio = "commun_012_ambiance_nuit_boucle",
                 seconds = 115,
-                loopAudio = !useConfirmedFirstNightAudio,
-                replayable = !useConfirmedFirstNightAudio,
+                loopAudio = true,
+                replayable = true,
             ),
         )
         add(

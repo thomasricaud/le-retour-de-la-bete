@@ -1,16 +1,16 @@
 # Ressources audio
 
-Ce document est le contrat de production et d'intégration des 60 ressources audio
+Ce document est le contrat de production et d'intégration des 62 ressources audio
 livrées avec l'application.
 
-Les 60 fichiers audio du manifeste sont fournis dans le dépôt. Les textes
+Les 62 fichiers audio du manifeste sont fournis dans le dépôt. Les textes
 ci-dessous sont les textes français exacts utilisés pour les voix. Ne pas
 ajouter à l'enregistrement les indications de production signalées comme non
 parlées.
 
 ## État d'intégration
 
-Les 60 entrées du manifeste ont exactement un MP3 correspondant dans
+Les 62 entrées du manifeste ont exactement un MP3 correspondant dans
 `app/src/main/res/raw/`. Les voix produites par synthèse utilisent
 `fr-FR-RemyMultilingualNeural`, conformément à la validation. Cinq des six
 montages locaux précédemment retenus sont conservés. Le synopsis et les deux
@@ -50,10 +50,12 @@ rédaction de ce document.
   l'attente silencieuse à cinq secondes.
 - `commun_012_ambiance_nuit_boucle` tourne sur le lecteur d'ambiance pendant tout
   l'écran Nuit, du premier texte au réveil du village.
-- La minuterie de départ joue au premier plan
-  `commun_001_nuit_depart_30` ou `commun_001_nuit_depart_45`. Elle reste
-  exactement de 30 ou 45 secondes selon la configuration, quelle que soit la
-  marge d'encodage du MP3.
+- Le temps pour rejoindre les habitations est toujours de 45 secondes. Hors
+  première nuit confirmée, la boucle `commun_012_ambiance_nuit_boucle` accompagne
+  cette minuterie.
+- La première nuit confirmée est une piste continue de 152 secondes. Les quatre
+  pistes `*_avance_*` remplacent la lecture en cours lorsque le joueur avance vers
+  un seuil précis.
 - La minuterie du conseil reste exactement de 115 secondes.
 - `commun_013_ambiance_jour_boucle` remplace automatiquement la boucle de nuit à
   l'entrée dans le Jour et continue pendant le tirage de la prochaine nuit.
@@ -85,22 +87,6 @@ rédaction de ce document.
 - Texte exact :
 
 > Vérifiez les pierres, le sac de guérison et la boîte des loups. Quand tout le monde est prêt, lancez la première nuit.
-
-#### `commun_001_nuit_depart_30.mp3`
-
-- Type : minuterie sonorisée.
-- Durée moteur : 30 secondes.
-- Texte exact :
-
-> C'est la nuit, regagnez vos habitations.
-
-#### `commun_001_nuit_depart_45.mp3`
-
-- Type : minuterie sonorisée.
-- Durée moteur : 45 secondes.
-- Texte exact :
-
-> C'est la nuit, regagnez vos habitations.
 
 #### `commun_002_bips_11.mp3`
 
@@ -191,7 +177,7 @@ rédaction de ce document.
 - Durée moteur : 6 secondes.
 - Texte exact :
 
-> Première nuit. Le loup garou de sang se réveille.
+> Première nuit. Le loup-garou de sang se réveille.
 
 #### `debutant_102_premiere_nuit_prendre_pierre.mp3`
 
@@ -199,7 +185,7 @@ rédaction de ce document.
 - Durée moteur : 8 secondes.
 - Texte exact :
 
-> Le loup garou de sang prend une pierre violette dans la boîte des loups.
+> Le loup-garou de sang prend une pierre violette dans la boîte des loups.
 
 #### `debutant_103_premiere_nuit_choisir_victime.mp3`
 
@@ -207,7 +193,7 @@ rédaction de ce document.
 - Durée moteur : 8 secondes.
 - Texte exact :
 
-> Le loup garou de sang choisit un villageois endormi et part le mordre.
+> Le loup-garou de sang choisit un villageois endormi et part le mordre.
 
 #### `debutant_104_premiere_nuit_victime.mp3`
 
@@ -215,7 +201,7 @@ rédaction de ce document.
 - Durée moteur : 12 secondes.
 - Texte exact :
 
-> Le joueur mordu ouvre les yeux pour reconnaître le loup garou de sang. Il donne sa pierre bleue et reçoit en échange la pierre violette.
+> Le joueur mordu ouvre les yeux pour reconnaître le loup-garou de sang. Il donne sa pierre bleue et reçoit en échange la pierre violette.
 
 #### `debutant_105_premiere_nuit_rangement.mp3`
 
@@ -223,7 +209,7 @@ rédaction de ce document.
 - Durée moteur : 11 secondes.
 - Texte exact :
 
-> Le loup garou de sang place la pierre bleue récupérée dans le sac de guérison, puis retourne vers son habitation pour se rendormir. Le joueur mordu referme les yeux.
+> Le loup-garou de sang place la pierre bleue récupérée dans le sac de guérison, puis retourne vers son habitation pour se rendormir. Le joueur mordu referme les yeux.
 
 #### `debutant_110_identification_conseil.mp3`
 
@@ -231,7 +217,7 @@ rédaction de ce document.
 - Durée moteur : 15 secondes.
 - Texte exact :
 
-> Au conseil des loups, chacun montre sa pierre pour se faire identifier. Le loup garou de sang montre sa pierre rouge. Les loups garous montrent leur pierre violette. Les goules présentes montrent la pierre de leur couleur.
+> Au conseil des loups, chacun montre sa pierre pour se faire identifier. Le loup-garou de sang montre sa pierre rouge. Les loups-garous montrent leur pierre violette. Les goules présentes montrent la pierre de leur couleur.
 
 #### Variantes `debutant_111_option_fin_partie_seuil_1.mp3` à `_seuil_5.mp3`
 
@@ -243,11 +229,11 @@ rédaction de ce document.
 
 | Seuil | Texte |
 |---:|---|
-| 1 | Le seuil de cette partie est d'un villageois. Si le loup garou de sang estime qu'il reste un villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue. |
-| 2 | Le seuil de cette partie est de deux villageois. Si le loup garou de sang estime qu'il reste deux villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue. |
-| 3 | Le seuil de cette partie est de trois villageois. Si le loup garou de sang estime qu'il reste trois villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue. |
-| 4 | Le seuil de cette partie est de quatre villageois. Si le loup garou de sang estime qu'il reste quatre villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue. |
-| 5 | Le seuil de cette partie est de cinq villageois. Si le loup garou de sang estime qu'il reste cinq villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue. |
+| 1 | Le seuil de cette partie est d'un villageois. Si le loup-garou de sang estime qu'il reste un villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue. |
+| 2 | Le seuil de cette partie est de deux villageois. Si le loup-garou de sang estime qu'il reste deux villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue. |
+| 3 | Le seuil de cette partie est de trois villageois. Si le loup-garou de sang estime qu'il reste trois villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue. |
+| 4 | Le seuil de cette partie est de quatre villageois. Si le loup-garou de sang estime qu'il reste quatre villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue. |
+| 5 | Le seuil de cette partie est de cinq villageois. Si le loup-garou de sang estime qu'il reste cinq villageois ou moins, il peut maintenant mettre fin à la partie en appelant : « Venez à moi, ma meute, mes adorateurs… » Sinon, le conseil continue. |
 
 #### `debutant_112_transfert_de_sang.mp3`
 
@@ -255,7 +241,7 @@ rédaction de ce document.
 - Durée moteur : 13 secondes.
 - Texte exact :
 
-> S'il le souhaite, le loup garou de sang échange son rôle et sa pierre rouge avec un loup garou, qui lui donne sa pierre violette. Le nouveau loup garou de sang décide de la suite.
+> S'il le souhaite, le loup-garou de sang échange son rôle et sa pierre rouge avec un loup-garou, qui lui donne sa pierre violette. Le nouveau loup-garou de sang décide de la suite.
 
 #### `debutant_113_designer_mordeur.mp3`
 
@@ -263,7 +249,7 @@ rédaction de ce document.
 - Durée moteur : 10 secondes.
 - Texte exact :
 
-> Le loup garou de sang désigne quel loup garou va mordre cette nuit. Il peut se désigner lui-même.
+> Le loup-garou de sang désigne quel loup-garou va mordre cette nuit. Il peut se désigner lui-même.
 
 #### `debutant_114_choisir_victime.mp3`
 
@@ -271,7 +257,7 @@ rédaction de ce document.
 - Durée moteur : 12 secondes.
 - Texte exact :
 
-> Le loup garou de sang choisit, ou laisse choisir, quel joueur sera mordu cette nuit : un joueur qui dort ou une goule présente au conseil des loups.
+> Le loup-garou de sang choisit, ou laisse choisir, quel joueur sera mordu cette nuit : un joueur qui dort ou une goule présente au conseil des loups.
 
 #### `debutant_115_prendre_pierre_violette.mp3`
 
@@ -279,7 +265,7 @@ rédaction de ce document.
 - Durée moteur : 10 secondes.
 - Texte exact :
 
-> Le loup garou désigné prend une pierre violette dans la boîte des loups et part mordre le joueur choisi.
+> Le loup-garou désigné prend une pierre violette dans la boîte des loups et part mordre le joueur choisi.
 
 #### `debutant_117_echange_pierres.mp3`
 
@@ -287,7 +273,7 @@ rédaction de ce document.
 - Durée moteur : 13 secondes.
 - Texte exact :
 
-> Le joueur mordu ouvre les yeux pour reconnaître le loup garou qui l'a mordu. Il donne sa pierre actuelle, bleue, jaune ou verte, et reçoit en échange la pierre violette. Il devient loup garou.
+> Le joueur mordu ouvre les yeux pour reconnaître le loup-garou qui l'a mordu. Il donne sa pierre actuelle, bleue, jaune ou verte, et reçoit en échange la pierre violette. Il devient loup-garou.
 
 #### `debutant_118_rangement_apres_morsure.mp3`
 
@@ -295,21 +281,33 @@ rédaction de ce document.
 - Durée moteur : 12 secondes.
 - Texte exact :
 
-> Le loup garou remet la pierre récupérée dans le sac de guérison, puis part se recoucher. Le joueur mordu referme les yeux.
+> Le loup-garou remet la pierre récupérée dans le sac de guérison, puis part se recoucher. Le joueur mordu referme les yeux.
 
 ### Confirmé
 
-#### `confirm_premiere_nuit.mp3`
+#### `premiere_nuit.mp3`
 
-- Type : minuterie sonorisée.
+- Type : minuterie sonorisée complète.
 - Mode : première nuit en guidage confirmé.
-- Durée du fichier fourni : environ 1 minute 44.
-- Durée moteur : 1 minute 55.
+- Durée moteur : 2 minutes 32.
 - Boucle : non.
-- Répétition manuelle : désactivée.
-- Texte exact :
+- Répétition manuelle : disponible uniquement pendant les 30 premières secondes.
+- Séquences affichées :
+  1. 02:32 à 02:02 : `Regagnez vos habitations`.
+  2. 02:02 à 01:47 : `Restez calme, préparez-vous à dormir`.
+  3. 01:47 à 01:33 : `Fermez les yeux`.
+  4. 01:33 à 00:30 : `Le loup-garou de sang se réveille`.
+  5. 00:30 à 00:05 : `Le jour va bientôt se lever`.
+  6. 00:05 à 00:00 : `Réveillez-vous`.
 
-> Le loup garou de sang se réveille et choisit sa première victime.
+#### Pistes d'avance de la première nuit confirmée
+
+| Fichier | Temps restant ciblé | Action |
+|---|---:|---|
+| `premiere_nuit_avance_gong.mp3` | 02:02 | Avance depuis la séquence 1. |
+| `premiere_nuit_avance_fermez_yeux.mp3` | 01:47 | Avance depuis la séquence 2. |
+| `nuit_avance_fin_nuit.mp3` | 00:30 | Avance depuis les séquences 3 ou 4. |
+| `nuit_avance_cocorico.mp3` | 00:05 | Avance depuis la séquence 5. |
 
 #### `confirme_201_premiere_nuit_reveil_sang.mp3`
 
@@ -319,13 +317,12 @@ rédaction de ce document.
   séquence active à partir de la version 0.4.2.
 - Texte exact :
 
-> Le loup garou de sang se réveille.
+> Le loup-garou de sang se réveille.
 
-Le mode confirmé utilise ensuite les ressources communes et les réveils jaune ou
-vert. Le moteur reproduit désormais la séquence : piste de départ complète de
-30 ou 45 secondes, piste `confirm_premiere_nuit` lors du premier conseil,
-réveil de la meute à partir de la deuxième nuit, conseil de 115 secondes, onze
-bips, rendormissement, cocorico et réveil du village.
+À partir de la deuxième nuit, le mode confirmé utilise la minuterie de départ
+fixe de 45 secondes avec l'ambiance nocturne, puis les réveils jaune ou vert, le
+conseil de 115 secondes, onze bips, le rendormissement, le cocorico et le réveil
+du village.
 
 ### Jaune
 
@@ -343,7 +340,7 @@ bips, rendormissement, cocorico et réveil du village.
 - Durée moteur : 9 secondes.
 - Texte exact :
 
-> Les loups garous et les goules jaunes se réveillent et se rendent au conseil des loups.
+> Les loups-garous et les goules jaunes se réveillent et se rendent au conseil des loups.
 
 ### Vert
 
@@ -361,7 +358,7 @@ bips, rendormissement, cocorico et réveil du village.
 - Durée moteur : 9 secondes.
 - Texte exact :
 
-> Les loups garous et les goules vertes se réveillent et se rendent au conseil des loups.
+> Les loups-garous et les goules vertes se réveillent et se rendent au conseil des loups.
 
 ### Aides
 
@@ -371,7 +368,7 @@ bips, rendormissement, cocorico et réveil du village.
 - Durée moteur : 72 secondes.
 - Texte exact :
 
-> Nous pensions les loups garous décimés, mais cette nuit, tous les villageois ont reconnu les hurlements d'une nouvelle bête, née des péchés de ce monde : un Alpha, venu transmettre son mal à l'un d'entre nous. Triste compagnon d'infortune, l'un de nous est maintenant devenu un loup garou de sang qui va chercher à tous nous transformer pour constituer une nouvelle meute. Mais, villageois ! Restons unis et confiants ! Depuis les tragiques événements de Thiercelieux, nous avons appris à reconnaître l'apparition du mal et à enrayer sa propagation. La guérison est possible. Il faudra juste reconnaître le loup garou de sang parmi nous… et te tuer, avant que tu ne t'empares de toutes nos âmes.
+> Nous pensions les loups-garous décimés, mais cette nuit, tous les villageois ont reconnu les hurlements d'une nouvelle bête, née des péchés de ce monde : un Alpha, venu transmettre son mal à l'un d'entre nous. Triste compagnon d'infortune, l'un de nous est maintenant devenu un loup-garou de sang qui va chercher à tous nous transformer pour constituer une nouvelle meute. Mais, villageois ! Restons unis et confiants ! Depuis les tragiques événements de Thiercelieux, nous avons appris à reconnaître l'apparition du mal et à enrayer sa propagation. La guérison est possible. Il faudra juste reconnaître le loup-garou de sang parmi nous… et te tuer, avant que tu ne t'empares de toutes nos âmes.
 
 #### `aides_402_roles_principe.mp3`
 
@@ -379,7 +376,7 @@ bips, rendormissement, cocorico et réveil du village.
 - Durée moteur : 35 secondes.
 - Texte exact :
 
-> Vous cachez en permanence une pierre de couleur sur vous. Elle identifie votre rôle. Votre rôle doit rester secret. Vous ne montrez votre pierre que la nuit, au conseil des loups garous, la nuit si vous êtes mordu, ou le jour si l'on vous guérit. Votre rôle, et donc votre objectif, peut changer plusieurs fois au cours de la partie. Tout le monde commence villageois avec une pierre bleue, sauf un joueur : le loup garou de sang, qui commence avec une pierre rouge.
+> Vous cachez en permanence une pierre de couleur sur vous. Elle identifie votre rôle. Votre rôle doit rester secret. Vous ne montrez votre pierre que la nuit, au conseil des loups-garous, la nuit si vous êtes mordu, ou le jour si l'on vous guérit. Votre rôle, et donc votre objectif, peut changer plusieurs fois au cours de la partie. Tout le monde commence villageois avec une pierre bleue, sauf un joueur : le loup-garou de sang, qui commence avec une pierre rouge.
 
 #### `aides_410_deroulement_nuit.mp3`
 
@@ -387,7 +384,7 @@ bips, rendormissement, cocorico et réveil du village.
 - Durées moteur : 55 secondes dans l'introduction et 60 secondes dans l'aide.
 - Texte exact :
 
-> Un tour comprend une nuit et un jour. La nuit, tout le monde part dormir. Le loup garou de sang, les loups garous et les goules de la couleur de la nuit se réveillent et rejoignent le conseil des loups. Chacun montre sa pierre. Le loup garou de sang peut tenter de mettre fin à la partie, transférer son sang à un loup garou, désigner celui qui va mordre, puis choisir ou laisser choisir la victime. Le loup garou désigné prend une pierre violette, mord la victime, échange cette pierre contre l'ancienne pierre de la victime, remet la pierre récupérée dans le sac de guérison, puis retourne se coucher. Tous les joueurs encore réveillés se rendorment. Le cocorico annonce le réveil du village.
+> Un tour comprend une nuit et un jour. La nuit, tout le monde part dormir. Le loup-garou de sang, les loups-garous et les goules de la couleur de la nuit se réveillent et rejoignent le conseil des loups. Chacun montre sa pierre. Le loup-garou de sang peut tenter de mettre fin à la partie, transférer son sang à un loup-garou, désigner celui qui va mordre, puis choisir ou laisser choisir la victime. Le loup-garou désigné prend une pierre violette, mord la victime, échange cette pierre contre l'ancienne pierre de la victime, remet la pierre récupérée dans le sac de guérison, puis retourne se coucher. Tous les joueurs encore réveillés se rendorment. Le cocorico annonce le réveil du village.
 
 #### `aides_411_deroulement_jour.mp3`
 
@@ -403,7 +400,7 @@ bips, rendormissement, cocorico et réveil du village.
 - Durée moteur : 35 secondes.
 - Texte exact :
 
-> Le loup garou qui part mordre prend une pierre violette dans la boîte des loups. Il mord le joueur choisi. Il échange la pierre violette contre l'ancienne pierre du joueur, bleue, jaune ou verte. Il repose cette ancienne pierre dans le sac de guérison, puis retourne se coucher.
+> Le loup-garou qui part mordre prend une pierre violette dans la boîte des loups. Il mord le joueur choisi. Il échange la pierre violette contre l'ancienne pierre du joueur, bleue, jaune ou verte. Il repose cette ancienne pierre dans le sac de guérison, puis retourne se coucher.
 
 #### `aides_421_etre_mordu.mp3`
 
@@ -411,7 +408,7 @@ bips, rendormissement, cocorico et réveil du village.
 - Durée moteur : 28 secondes.
 - Texte exact :
 
-> Le joueur mordu ouvre les yeux pour reconnaître le loup garou qui l'a mordu. Il donne sa pierre actuelle, bleue, jaune ou verte, et reçoit en échange une pierre violette. Il devient loup garou, puis referme les yeux.
+> Le joueur mordu ouvre les yeux pour reconnaître le loup-garou qui l'a mordu. Il donne sa pierre actuelle, bleue, jaune ou verte, et reçoit en échange une pierre violette. Il devient loup-garou, puis referme les yeux.
 
 #### `aides_440_fin_a.mp3`
 
@@ -419,7 +416,7 @@ bips, rendormissement, cocorico et réveil du village.
 - Durée moteur : 70 secondes.
 - Texte exact :
 
-> Fin de partie A. Le joueur choisi pour la guérison est le loup garou de sang. Les villageois tuent la bête. Tous les joueurs encore villageois gagnent. Le loup garou de sang perd. Les villageois tentent maintenant de guérir tous les loups garous et toutes les goules. Chaque loup garou remet sa pierre violette dans la boîte des loups. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison. Chacun tire ensuite une dernière pierre dans le sac. Une pierre bleue signifie qu'il gagne avec les villageois. Une pierre jaune ou verte signifie qu'il perd avec le loup garou de sang.
+> Fin de partie A. Le joueur choisi pour la guérison est le loup-garou de sang. Les villageois tuent la bête. Tous les joueurs encore villageois gagnent. Le loup-garou de sang perd. Les villageois tentent maintenant de guérir tous les loups-garous et toutes les goules. Chaque loup-garou remet sa pierre violette dans la boîte des loups. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison. Chacun tire ensuite une dernière pierre dans le sac. Une pierre bleue signifie qu'il gagne avec les villageois. Une pierre jaune ou verte signifie qu'il perd avec le loup-garou de sang.
 
 #### Variantes `aides_441_appel_de_la_meute_seuil_1.mp3` à `_seuil_5.mp3`
 
@@ -429,11 +426,11 @@ bips, rendormissement, cocorico et réveil du village.
 
 | Seuil | Texte |
 |---:|---|
-| 1 | Le seuil de cette partie est d'un villageois. Si le loup garou de sang estime qu'il reste un villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil d'un. |
-| 2 | Le seuil de cette partie est de deux villageois. Si le loup garou de sang estime qu'il reste deux villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil de deux. |
-| 3 | Le seuil de cette partie est de trois villageois. Si le loup garou de sang estime qu'il reste trois villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil de trois. |
-| 4 | Le seuil de cette partie est de quatre villageois. Si le loup garou de sang estime qu'il reste quatre villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil de quatre. |
-| 5 | Le seuil de cette partie est de cinq villageois. Si le loup garou de sang estime qu'il reste cinq villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil de cinq. |
+| 1 | Le seuil de cette partie est d'un villageois. Si le loup-garou de sang estime qu'il reste un villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil d'un. |
+| 2 | Le seuil de cette partie est de deux villageois. Si le loup-garou de sang estime qu'il reste deux villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil de deux. |
+| 3 | Le seuil de cette partie est de trois villageois. Si le loup-garou de sang estime qu'il reste trois villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil de trois. |
+| 4 | Le seuil de cette partie est de quatre villageois. Si le loup-garou de sang estime qu'il reste quatre villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil de quatre. |
+| 5 | Le seuil de cette partie est de cinq villageois. Si le loup-garou de sang estime qu'il reste cinq villageois ou moins, il peut prononcer : « Venez à moi, ma meute, mes adorateurs… » Toutes les goules jaunes et vertes rejoignent alors le conseil, quelle que soit la couleur de la nuit. Comparez le nombre de villageois encore endormis au seuil de cinq. |
 
 #### Variantes `aides_442_fin_b1_seuil_1.mp3` à `_seuil_5.mp3`
 
@@ -443,11 +440,11 @@ bips, rendormissement, cocorico et réveil du village.
 
 | Seuil | Texte |
 |---:|---|
-| 1 | Fin de partie B un. Le seuil de cette partie était d'un villageois et il n'est pas dépassé. L'appel du loup garou de sang était juste. Les loups garous tuent les derniers villageois. Le loup garou de sang et les loups garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd. |
-| 2 | Fin de partie B un. Le seuil de cette partie était de deux villageois et il n'est pas dépassé. L'appel du loup garou de sang était juste. Les loups garous tuent les derniers villageois. Le loup garou de sang et les loups garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd. |
-| 3 | Fin de partie B un. Le seuil de cette partie était de trois villageois et il n'est pas dépassé. L'appel du loup garou de sang était juste. Les loups garous tuent les derniers villageois. Le loup garou de sang et les loups garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd. |
-| 4 | Fin de partie B un. Le seuil de cette partie était de quatre villageois et il n'est pas dépassé. L'appel du loup garou de sang était juste. Les loups garous tuent les derniers villageois. Le loup garou de sang et les loups garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd. |
-| 5 | Fin de partie B un. Le seuil de cette partie était de cinq villageois et il n'est pas dépassé. L'appel du loup garou de sang était juste. Les loups garous tuent les derniers villageois. Le loup garou de sang et les loups garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd. |
+| 1 | Fin de partie B un. Le seuil de cette partie était d'un villageois et il n'est pas dépassé. L'appel du loup-garou de sang était juste. Les loups-garous tuent les derniers villageois. Le loup-garou de sang et les loups-garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup-garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd. |
+| 2 | Fin de partie B un. Le seuil de cette partie était de deux villageois et il n'est pas dépassé. L'appel du loup-garou de sang était juste. Les loups-garous tuent les derniers villageois. Le loup-garou de sang et les loups-garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup-garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd. |
+| 3 | Fin de partie B un. Le seuil de cette partie était de trois villageois et il n'est pas dépassé. L'appel du loup-garou de sang était juste. Les loups-garous tuent les derniers villageois. Le loup-garou de sang et les loups-garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup-garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd. |
+| 4 | Fin de partie B un. Le seuil de cette partie était de quatre villageois et il n'est pas dépassé. L'appel du loup-garou de sang était juste. Les loups-garous tuent les derniers villageois. Le loup-garou de sang et les loups-garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup-garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd. |
+| 5 | Fin de partie B un. Le seuil de cette partie était de cinq villageois et il n'est pas dépassé. L'appel du loup-garou de sang était juste. Les loups-garous tuent les derniers villageois. Le loup-garou de sang et les loups-garous gagnent. Chaque goule tire maintenant une carte Nuit au hasard. Si la carte est de sa couleur, elle est transformée en loup-garou et gagne avec la meute. Si la carte n'est pas de sa couleur, elle est tuée et perd. |
 
 #### Variantes `aides_443_fin_b2_seuil_1.mp3` à `_seuil_5.mp3`
 
@@ -457,11 +454,11 @@ bips, rendormissement, cocorico et réveil du village.
 
 | Seuil | Texte |
 |---:|---|
-| 1 | Fin de partie B deux. Le seuil de cette partie était d'un villageois et il est dépassé. Le loup garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup garou de sang et les loups garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups garous. |
-| 2 | Fin de partie B deux. Le seuil de cette partie était de deux villageois et il est dépassé. Le loup garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup garou de sang et les loups garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups garous. |
-| 3 | Fin de partie B deux. Le seuil de cette partie était de trois villageois et il est dépassé. Le loup garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup garou de sang et les loups garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups garous. |
-| 4 | Fin de partie B deux. Le seuil de cette partie était de quatre villageois et il est dépassé. Le loup garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup garou de sang et les loups garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups garous. |
-| 5 | Fin de partie B deux. Le seuil de cette partie était de cinq villageois et il est dépassé. Le loup garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup garou de sang et les loups garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups garous. |
+| 1 | Fin de partie B deux. Le seuil de cette partie était d'un villageois et il est dépassé. Le loup-garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup-garou de sang et les loups-garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups-garous. |
+| 2 | Fin de partie B deux. Le seuil de cette partie était de deux villageois et il est dépassé. Le loup-garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup-garou de sang et les loups-garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups-garous. |
+| 3 | Fin de partie B deux. Le seuil de cette partie était de trois villageois et il est dépassé. Le loup-garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup-garou de sang et les loups-garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups-garous. |
+| 4 | Fin de partie B deux. Le seuil de cette partie était de quatre villageois et il est dépassé. Le loup-garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup-garou de sang et les loups-garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups-garous. |
+| 5 | Fin de partie B deux. Le seuil de cette partie était de cinq villageois et il est dépassé. Le loup-garou de sang s'est trompé et annonce son erreur à voix haute. Les villageois se réveillent, puis tuent le loup-garou de sang et les loups-garous. Les villageois gagnent. Ils tentent maintenant de guérir toutes les goules. Chaque goule remet sa pierre jaune ou verte dans le sac de guérison, puis tire une dernière pierre. Une pierre bleue signifie qu'elle gagne avec les villageois. Une pierre jaune ou verte signifie qu'elle perd avec les loups-garous. |
 
 #### `aides_450_preparation.mp3`
 
@@ -469,7 +466,7 @@ bips, rendormissement, cocorico et réveil du village.
 - Durée moteur : 90 secondes.
 - Texte exact :
 
-> Définissez les lieux où les joueurs pourront dormir et un lieu de réunion avec une table. Définissez comment une victime reconnaîtra qu'elle est mordue, comment se déroulera la guérison, combien de temps durera la concertation du jour et comment aura lieu le vote, y compris en cas d'égalité. Pour le tirage des rôles de départ, préparez une pierre rouge et une pierre bleue pour chaque autre joueur. Chaque joueur tire secrètement une pierre. Préparez ensuite le sac de guérison avec une pierre bleue par joueur autre que le loup garou de sang, puis autant de pierres jaunes et vertes au total, en équilibrant les deux couleurs autant que possible. Placez dans la boîte des loups une pierre violette par joueur. Mélangez les huit cartes Nuit : quatre jaunes et quatre vertes. Placez sur la table le dispositif sonore, le sac de guérison, la boîte des loups, les cartes Nuit et les aides de jeu. Choisissez enfin le niveau débutant ou confirmé, puis lancez la partie.
+> Définissez les lieux où les joueurs pourront dormir et un lieu de réunion avec une table. Définissez comment une victime reconnaîtra qu'elle est mordue, comment se déroulera la guérison, combien de temps durera la concertation du jour et comment aura lieu le vote, y compris en cas d'égalité. Pour le tirage des rôles de départ, préparez une pierre rouge et une pierre bleue pour chaque autre joueur. Chaque joueur tire secrètement une pierre. Préparez ensuite le sac de guérison avec une pierre bleue par joueur autre que le loup-garou de sang, puis autant de pierres jaunes et vertes au total, en équilibrant les deux couleurs autant que possible. Placez dans la boîte des loups une pierre violette par joueur. Mélangez les huit cartes Nuit : quatre jaunes et quatre vertes. Placez sur la table le dispositif sonore, le sac de guérison, la boîte des loups, les cartes Nuit et les aides de jeu. Choisissez enfin le niveau débutant ou confirmé, puis lancez la partie.
 
 #### `aides_451_securite_nuit.mp3`
 
