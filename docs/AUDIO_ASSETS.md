@@ -1,16 +1,16 @@
 # Ressources audio
 
-Ce document est le contrat de production et d'intégration des 62 ressources audio
+Ce document est le contrat de production et d'intégration des 66 ressources audio
 livrées avec l'application.
 
-Les 62 fichiers audio du manifeste sont fournis dans le dépôt. Les textes
+Les 66 fichiers audio du manifeste sont fournis dans le dépôt. Les textes
 ci-dessous sont les textes français exacts utilisés pour les voix. Ne pas
 ajouter à l'enregistrement les indications de production signalées comme non
 parlées.
 
 ## État d'intégration
 
-Les 62 entrées du manifeste ont exactement un MP3 correspondant dans
+Les 66 entrées du manifeste ont exactement un MP3 correspondant dans
 `app/src/main/res/raw/`. Les voix produites par synthèse utilisent
 `fr-FR-RemyMultilingualNeural`, conformément à la validation. Cinq des six
 montages locaux précédemment retenus sont conservés. Le synopsis et les deux
@@ -319,10 +319,34 @@ rédaction de ce document.
 
 > Le loup-garou de sang se réveille.
 
-À partir de la deuxième nuit, le mode confirmé utilise la minuterie de départ
-fixe de 45 secondes avec l'ambiance nocturne, puis les réveils jaune ou vert, le
-conseil de 115 secondes, onze bips, le rendormissement, le cocorico et le réveil
-du village.
+#### `nuit.mp3`
+
+- Type : minuterie sonorisée complète.
+- Mode : nuits confirmées à partir de la deuxième nuit.
+- Durée moteur : 4 minutes 18.
+- Boucle : non.
+- Répétition manuelle : disponible uniquement pendant les 30 premières secondes.
+- Séquences affichées :
+  1. 04:18 à 03:48 : `Regagnez vos habitations`.
+  2. 03:48 à 03:33 : `Restez calme, préparez-vous à dormir`.
+  3. 03:33 à 03:13 : `Fermez les yeux`.
+  4. 03:13 à 02:50 : `Le loup-garou de sang se réveille et appelle sa meute, ses adorateurs`.
+  5. 02:50 à 00:30 : `Conseil des loups`.
+  6. 00:30 à 00:05 : `Le jour va bientôt se lever`.
+  7. 00:05 à 00:00 : `Réveillez-vous`.
+
+#### Pistes d'avance des nuits confirmées suivantes
+
+| Fichier | Temps restant ciblé | Action |
+|---|---:|---|
+| `nuit_avance_gong.mp3` | 03:48 | Avance depuis la séquence 1. |
+| `nuit_avance_fermez_yeux.mp3` | 03:33 | Avance depuis la séquence 2. |
+| `nuit_avance_conseil_loups.mp3` | 02:50 | Avance depuis les séquences 3 ou 4. |
+| `nuit_avance_fin_nuit.mp3` | 00:30 | Avance depuis la séquence 5. |
+| `nuit_avance_cocorico.mp3` | 00:05 | Avance depuis la séquence 6. |
+
+L'appel est proposé uniquement pendant les séquences 3 à 5. Sa confirmation ne
+met pas en pause la minuterie ni la piste en cours.
 
 ### Jaune
 

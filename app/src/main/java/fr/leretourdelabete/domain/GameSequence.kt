@@ -59,9 +59,9 @@ object ConfirmedFirstNightTimeline {
             )
             remaining > BEFORE_SUNRISE_MILLIS -> FirstNightPresentation(
                 title = "Le loup-garou de sang se réveille",
-                text = "Prenez une pierre violette dans la boîte des loups pour l'échanger " +
-                    "avec la pierre bleue de votre victime. Rangez la pierre bleue récupérée " +
-                    "dans le sac de guérison. Retournez dormir.",
+                text = "Prenez une pierre violette de la boîte des loups pour l'échanger " +
+                    "avec la pierre de votre victime. Placer la pierre récupérée dans le sac " +
+                    "de guérison. Retournez dormir.",
             )
             remaining > WAKE_UP_MILLIS -> FirstNightPresentation(
                 title = "Le jour va bientôt se lever",
@@ -112,6 +112,130 @@ object ConfirmedFirstNightTimeline {
 
     fun canReplay(remainingMillis: Long): Boolean =
         remainingMillis > AFTER_HABITATIONS_MILLIS
+
+    private fun secondsUntil(remainingMillis: Long, boundaryMillis: Long): Long =
+        ((remainingMillis - boundaryMillis).coerceAtLeast(0L) + 999L) / 1_000L
+}
+
+object ConfirmedLaterNightTimeline {
+    const val CUE_ID = "confirmed_later_night"
+    const val TOTAL_MILLIS = 258_000L
+    const val AFTER_HABITATIONS_MILLIS = 228_000L
+    const val AFTER_PREPARATION_MILLIS = 213_000L
+    const val AFTER_EYES_CLOSED_MILLIS = 193_000L
+    const val COUNCIL_MILLIS = 170_000L
+    const val BEFORE_SUNRISE_MILLIS = 30_000L
+    const val WAKE_UP_MILLIS = 5_000L
+
+    fun presentation(
+        remainingMillis: Long,
+        color: NightColor,
+        packCallVillagerLimit: Int,
+    ): FirstNightPresentation {
+        val remaining = remainingMillis.coerceIn(0L, TOTAL_MILLIS)
+        val colorWord = if (color == NightColor.YELLOW) "jaunes" else "vertes"
+        return when {
+            remaining > AFTER_HABITATIONS_MILLIS -> FirstNightPresentation(
+                title = "Regagnez vos habitations",
+                text = "Vous avez ${secondsUntil(remaining, AFTER_HABITATIONS_MILLIS)} secondes " +
+                    "pour vous asseoir ou vous allonger.",
+            )
+            remaining > AFTER_PREPARATION_MILLIS -> FirstNightPresentation(
+                title = "Restez calme, préparez-vous à dormir",
+                text = "Dans ${secondsUntil(remaining, AFTER_PREPARATION_MILLIS)} secondes " +
+                    "il faudra obligatoirement fermer les yeux.",
+            )
+            remaining > AFTER_EYES_CLOSED_MILLIS -> FirstNightPresentation(
+                title = "Fermez les yeux",
+                text = "",
+            )
+            remaining > COUNCIL_MILLIS -> FirstNightPresentation(
+                title = "Le loup-garou de sang se réveille et appelle sa meute, ses adorateurs",
+                text = "Les loups-garous et les goules $colorWord rejoignent le loup-garou de sang.",
+            )
+            remaining > BEFORE_SUNRISE_MILLIS -> FirstNightPresentation(
+                title = "Conseil des loups",
+                text = "1- Chacun présente sa pierre\n" +
+                    "2- Le loup-garou de sang peut faire son appel s'il pense qu'il reste " +
+                    "$packCallVillagerLimit villageois ou moins\n" +
+                    "3- Le loup-garou de sang peut échanger sa pierre avec celle d'un " +
+                    "loup-garou (transfert de sang)\n" +
+                    "4- Le loup-garou de sang désigne qui part mordre (lui ou un loup-garou)\n" +
+                    "5- La victime est choisie (un joueur qui dort ou une goule présente au conseil)\n\n" +
+                    "Prenez une pierre violette dans la boîte des loups pour l'échanger avec " +
+                    "la pierre de votre victime. Rangez la pierre récupérée dans le sac de guérison.\n\n" +
+                    "Retournez tous dormir.",
+            )
+            remaining > WAKE_UP_MILLIS -> FirstNightPresentation(
+                title = "Le jour va bientôt se lever",
+                text = "Attention, vous n'avez plus que " +
+                    "${secondsUntil(remaining, WAKE_UP_MILLIS)} secondes pour regagner votre " +
+                    "habitation et fermer les yeux !",
+            )
+            else -> FirstNightPresentation(
+                title = "Réveillez-vous",
+                text = "",
+            )
+        }
+    }
+
+    fun sequenceNumber(remainingMillis: Long): Int {
+        val remaining = remainingMillis.coerceIn(0L, TOTAL_MILLIS)
+        return when {
+            remaining > AFTER_HABITATIONS_MILLIS -> 1
+            remaining > AFTER_PREPARATION_MILLIS -> 2
+            remaining > AFTER_EYES_CLOSED_MILLIS -> 3
+            remaining > COUNCIL_MILLIS -> 4
+            remaining > BEFORE_SUNRISE_MILLIS -> 5
+            remaining > WAKE_UP_MILLIS -> 6
+            else -> 7
+        }
+    }
+
+    fun playback(remainingMillis: Long): FirstNightPlayback {
+        val remaining = remainingMillis.coerceIn(0L, TOTAL_MILLIS)
+        return when {
+            remaining > AFTER_HABITATIONS_MILLIS -> FirstNightPlayback(
+                audioResource = "nuit",
+                seekMillis = TOTAL_MILLIS - remaining,
+            )
+            remaining > AFTER_PREPARATION_MILLIS -> FirstNightPlayback(
+                audioResource = "nuit_avance_gong",
+                seekMillis = AFTER_HABITATIONS_MILLIS - remaining,
+            )
+            remaining > COUNCIL_MILLIS -> FirstNightPlayback(
+                audioResource = "nuit_avance_fermez_yeux",
+                seekMillis = AFTER_PREPARATION_MILLIS - remaining,
+            )
+            remaining > BEFORE_SUNRISE_MILLIS -> FirstNightPlayback(
+                audioResource = "nuit_avance_conseil_loups",
+                seekMillis = COUNCIL_MILLIS - remaining,
+            )
+            remaining > WAKE_UP_MILLIS -> FirstNightPlayback(
+                audioResource = "nuit_avance_fin_nuit",
+                seekMillis = BEFORE_SUNRISE_MILLIS - remaining,
+            )
+            else -> FirstNightPlayback(
+                audioResource = "nuit_avance_cocorico",
+                seekMillis = WAKE_UP_MILLIS - remaining,
+            )
+        }
+    }
+
+    fun advanceTarget(remainingMillis: Long): Long? = when {
+        remainingMillis > AFTER_HABITATIONS_MILLIS -> AFTER_HABITATIONS_MILLIS
+        remainingMillis > AFTER_PREPARATION_MILLIS -> AFTER_PREPARATION_MILLIS
+        remainingMillis > COUNCIL_MILLIS -> COUNCIL_MILLIS
+        remainingMillis > BEFORE_SUNRISE_MILLIS -> BEFORE_SUNRISE_MILLIS
+        remainingMillis > WAKE_UP_MILLIS -> WAKE_UP_MILLIS
+        else -> null
+    }
+
+    fun canReplay(remainingMillis: Long): Boolean =
+        remainingMillis > AFTER_HABITATIONS_MILLIS
+
+    fun canCall(remainingMillis: Long): Boolean =
+        sequenceNumber(remainingMillis) in 3..5
 
     private fun secondsUntil(remainingMillis: Long, boundaryMillis: Long): Long =
         ((remainingMillis - boundaryMillis).coerceAtLeast(0L) + 999L) / 1_000L
@@ -179,6 +303,23 @@ object GameSequenceFactory {
                     text = "Vous avez 30 secondes pour vous asseoir ou vous allonger.",
                     audio = "premiere_nuit",
                     seconds = 152,
+                    loopAudio = false,
+                ),
+            )
+            return@buildList
+        }
+
+        if (round > 1 && mode == GameMode.CONFIRMED) {
+            requireNotNull(color) {
+                "Une nuit après la première doit avoir une couleur."
+            }
+            add(
+                timer(
+                    id = ConfirmedLaterNightTimeline.CUE_ID,
+                    title = "Regagnez vos habitations",
+                    text = "Vous avez 30 secondes pour vous asseoir ou vous allonger.",
+                    audio = "nuit",
+                    seconds = 258,
                     loopAudio = false,
                 ),
             )
@@ -333,7 +474,7 @@ object GameSequenceFactory {
             title = "Concertation",
             audio = "commun_007_concertation_jour",
             seconds = 8,
-            text = "Tous les joueurs se réveillent et se concertent, en groupe ou séparément.",
+            text = "Échangez librement, en groupe ou séparément.",
         )
         "council" -> voice(
             id = "day_council",
@@ -357,23 +498,31 @@ object GameSequenceFactory {
             title = "La Bête est vaincue",
             audio = "aides_440_fin_a",
             seconds = 70,
-            text = "Le loup-garou de sang a été choisi pour la guérison. Les villageois gagnent.",
+            text = "Le loup-garou de sang s'est révélé lors de la guérison et a été abattu. " +
+                "Les villageois gagnent et tentent maintenant de guérir les loups-garous et " +
+                "les goules. En cas d'échec de la guérison, c'est l'asile psychiatrique pour " +
+                "ces pauvres âmes.",
         )
         "pack_success" -> voice(
             id = "end_pack_success",
             title = "La meute triomphe",
             audio = packCallAudio("aides_442_fin_b1", packCallVillagerLimit),
             seconds = 55,
-            text = "Il restait $packCallVillagerLimit villageois ou moins. L'appel était juste : " +
-                "le loup-garou de sang et les loups gagnent.",
+            text = "L'appel était juste : il restait $packCallVillagerLimit villageois ou " +
+                "moins. Le loup-garou de sang et les loups gagnent. Les villageois restant " +
+                "sont dévorés. Résolvez maintenant le sort des goules : seront-elles " +
+                "remordues pour faire partie de la meute ou dévorées également ?",
         )
         else -> voice(
             id = "end_pack_failure",
             title = "L'appel était une erreur",
             audio = packCallAudio("aides_443_fin_b2", packCallVillagerLimit),
             seconds = 60,
-            text = "Il restait plus de $packCallVillagerLimit villageois. " +
-                "Le village se soulève et gagne.",
+            text = "Erreur de la Bête ! Plus de $packCallVillagerLimit villageois dormaient " +
+                "encore. Le village se réveille et tue le loup-garou de sang et sa meute de " +
+                "loups-garous. Les villageois gagnent et tentent maintenant de guérir les " +
+                "goules. En cas d'échec de la guérison, c'est l'asile psychiatrique pour ces " +
+                "pauvres âmes.",
         )
     }
 

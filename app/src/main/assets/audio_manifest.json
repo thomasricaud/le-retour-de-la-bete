@@ -4,7 +4,7 @@
   "resource_directory": "app/src/main/res/raw",
   "file_extension": ".mp3",
   "flat_android_raw_directory": true,
-  "asset_count": 62,
+  "asset_count": 66,
   "timing_contract": {
     "departure_ms": 45000,
     "wolf_council_ms": 115000,
@@ -16,6 +16,17 @@
       122000,
       107000,
       93000,
+      30000,
+      5000,
+      0
+    ],
+    "confirmed_later_night_basename": "nuit",
+    "confirmed_later_night_total_ms": 258000,
+    "confirmed_later_night_remaining_boundaries_ms": [
+      228000,
+      213000,
+      193000,
+      170000,
       30000,
       5000,
       0
@@ -311,13 +322,49 @@
       "spoken_text": "Reprise de la première nuit confirmée à la consigne de fermer les yeux, avec 1 minute et 47 secondes restantes."
     },
     {
+      "basename": "nuit",
+      "filename": "nuit.mp3",
+      "category": "confirme",
+      "kind": "timer",
+      "motor_durations_ms": [258000],
+      "loop": false,
+      "spoken_text": "Nuit suivante confirmée complète, du départ vers les habitations au réveil du village."
+    },
+    {
+      "basename": "nuit_avance_gong",
+      "filename": "nuit_avance_gong.mp3",
+      "category": "confirme",
+      "kind": "timer_skip",
+      "motor_durations_ms": [228000],
+      "loop": false,
+      "spoken_text": "Reprise d'une nuit suivante confirmée au gong, avec 3 minutes et 48 secondes restantes."
+    },
+    {
+      "basename": "nuit_avance_fermez_yeux",
+      "filename": "nuit_avance_fermez_yeux.mp3",
+      "category": "confirme",
+      "kind": "timer_skip",
+      "motor_durations_ms": [213000],
+      "loop": false,
+      "spoken_text": "Reprise d'une nuit suivante confirmée à la consigne de fermer les yeux, avec 3 minutes et 33 secondes restantes."
+    },
+    {
+      "basename": "nuit_avance_conseil_loups",
+      "filename": "nuit_avance_conseil_loups.mp3",
+      "category": "confirme",
+      "kind": "timer_skip",
+      "motor_durations_ms": [170000],
+      "loop": false,
+      "spoken_text": "Reprise d'une nuit suivante confirmée au conseil des loups, avec 2 minutes et 50 secondes restantes."
+    },
+    {
       "basename": "nuit_avance_fin_nuit",
       "filename": "nuit_avance_fin_nuit.mp3",
       "category": "confirme",
       "kind": "timer_skip",
       "motor_durations_ms": [30000],
       "loop": false,
-      "spoken_text": "Reprise de la première nuit confirmée à l'annonce de la fin de nuit, avec 30 secondes restantes."
+      "spoken_text": "Reprise d'une nuit confirmée à l'annonce de la fin de nuit, avec 30 secondes restantes."
     },
     {
       "basename": "nuit_avance_cocorico",
@@ -326,7 +373,7 @@
       "kind": "timer_skip",
       "motor_durations_ms": [5000],
       "loop": false,
-      "spoken_text": "Reprise de la première nuit confirmée au cocorico, avec 5 secondes restantes."
+      "spoken_text": "Reprise d'une nuit confirmée au cocorico, avec 5 secondes restantes."
     },
     {
       "basename": "confirme_201_premiere_nuit_reveil_sang",

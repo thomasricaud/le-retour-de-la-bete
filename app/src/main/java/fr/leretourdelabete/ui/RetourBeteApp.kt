@@ -47,7 +47,6 @@ import fr.leretourdelabete.model.GameMode
 import fr.leretourdelabete.model.GameScreen
 import fr.leretourdelabete.ui.theme.BloodRedBright
 import fr.leretourdelabete.ui.theme.Bone
-import fr.leretourdelabete.ui.theme.GhoulGreen
 import fr.leretourdelabete.ui.theme.MoonYellow
 import fr.leretourdelabete.ui.theme.Parchment
 import kotlinx.coroutines.delay
@@ -59,10 +58,11 @@ fun RetourBeteApp(viewModel: GameViewModel = viewModel()) {
 
     BackHandler(enabled = screen != GameScreen.HOME) {
         when (screen) {
-            GameScreen.SETUP,
+            GameScreen.BLUETOOTH_SETUP,
             GameScreen.HELP,
             GameScreen.END,
             -> viewModel.returnToHome()
+            GameScreen.SETUP -> viewModel.returnToBluetoothSetup()
             else -> viewModel.pauseAndReturnHome()
         }
     }
@@ -83,17 +83,23 @@ fun RetourBeteApp(viewModel: GameViewModel = viewModel()) {
                 onResume = viewModel::resumeSavedGame,
                 onHelp = viewModel::openHelp,
             )
-            GameScreen.SETUP -> SetupScreen(
+            GameScreen.BLUETOOTH_SETUP -> BluetoothSetupScreen(
                 state = state,
                 onBack = viewModel::returnToHome,
-                onUpdate = viewModel::updateSetup,
                 onTestSpeaker = viewModel::testSpeaker,
                 onBluetooth = viewModel::openBluetoothSettings,
+                onContinue = viewModel::continueToSetup,
+            )
+            GameScreen.SETUP -> SetupScreen(
+                state = state,
+                onBack = viewModel::returnToBluetoothSetup,
+                onUpdate = viewModel::updateSetup,
                 onStart = viewModel::startConfiguredGame,
             )
             GameScreen.INTRO,
             GameScreen.NIGHT,
             -> SequenceScreen(state = state, viewModel = viewModel)
+            GameScreen.NIGHT_READY -> NightReadyScreen(state = state, viewModel = viewModel)
             GameScreen.DAY -> DayScreen(state = state, viewModel = viewModel)
             GameScreen.DRAW -> DrawScreen(state = state, viewModel = viewModel)
             GameScreen.HELP -> HelpScreen(
@@ -272,12 +278,85 @@ private fun HomeScreen(
 }
 
 @Composable
+private fun BluetoothSetupScreen(
+    state: GameUiState,
+    onBack: () -> Unit,
+    onTestSpeaker: () -> Unit,
+    onBluetooth: () -> Unit,
+    onContinue: () -> Unit,
+) {
+    GameBackdrop {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 28.dp, vertical = 22.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                ScreenTitle(
+                    title = "Connexion Bluetooth",
+                    subtitle = "Vérifiez la connexion de votre téléphone au système audio " +
+                        "pour le bon déroulement de partie.",
+                )
+                LargeActionButton(
+                    label = "RETOUR",
+                    onClick = onBack,
+                    tone = ActionTone.SECONDARY,
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                GlassPanel(
+                    modifier = Modifier.fillMaxWidth(0.72f),
+                    containerAlpha = 0.64f,
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                    ) {
+                        AudioRouteBadge(state.audioRoute)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            LargeActionButton(
+                                label = "Réglages Bluetooth",
+                                onClick = onBluetooth,
+                                modifier = Modifier.weight(1f),
+                                tone = ActionTone.SECONDARY,
+                                iconRes = R.drawable.ic_bluetooth,
+                            )
+                            LargeActionButton(
+                                label = "TESTER",
+                                onClick = onTestSpeaker,
+                                modifier = Modifier.weight(1f),
+                                tone = ActionTone.SECONDARY,
+                            )
+                            LargeActionButton(
+                                label = "PASSER",
+                                onClick = onContinue,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun SetupScreen(
     state: GameUiState,
     onBack: () -> Unit,
     onUpdate: ((fr.leretourdelabete.model.SetupOptions) -> fr.leretourdelabete.model.SetupOptions) -> Unit,
-    onTestSpeaker: () -> Unit,
-    onBluetooth: () -> Unit,
     onStart: () -> Unit,
 ) {
     val setup = state.setup
@@ -397,37 +476,6 @@ private fun SetupScreen(
                                 playerCount = setup.playerCount,
                                 drawMode = setup.drawMode,
                             )
-                        }
-                    }
-                    GlassPanel(
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text(
-                                "Réglage BT",
-                                color = if (state.audioRoute.external) GhoulGreen else Parchment,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                LargeActionButton(
-                                    label = "Réglages Bluetooth",
-                                    onClick = onBluetooth,
-                                    modifier = Modifier.weight(1f),
-                                    tone = ActionTone.SECONDARY,
-                                    iconRes = R.drawable.ic_bluetooth,
-                                )
-                                LargeActionButton(
-                                    label = "TESTER",
-                                    onClick = onTestSpeaker,
-                                    modifier = Modifier.weight(1f),
-                                    tone = ActionTone.SECONDARY,
-                                )
-                            }
                         }
                     }
                     LargeActionButton(

@@ -20,6 +20,7 @@ import fr.leretourdelabete.data.GitHubReleaseUpdateChecker
 import fr.leretourdelabete.data.PendingAppUpdateDownload
 import fr.leretourdelabete.domain.CueKind
 import fr.leretourdelabete.domain.ConfirmedFirstNightTimeline
+import fr.leretourdelabete.domain.ConfirmedLaterNightTimeline
 import fr.leretourdelabete.domain.GameCue
 import fr.leretourdelabete.domain.GameSequenceFactory
 import fr.leretourdelabete.domain.NightDeck
@@ -124,7 +125,21 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun openSetup() {
         stopAllPlayback()
         _uiState.value = _uiState.value.copy(
+            session = GameSession(screen = GameScreen.BLUETOOTH_SETUP),
+            statusMessage = null,
+        )
+    }
+
+    fun continueToSetup() {
+        _uiState.value = _uiState.value.copy(
             session = GameSession(screen = GameScreen.SETUP),
+            statusMessage = null,
+        )
+    }
+
+    fun returnToBluetoothSetup() {
+        _uiState.value = _uiState.value.copy(
+            session = GameSession(screen = GameScreen.BLUETOOTH_SETUP),
             statusMessage = null,
         )
     }
@@ -165,7 +180,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 dayDurationMinutes = saved.dayDurationMinutes,
             ),
             hasSavedGame = true,
-            statusMessage = "Partie restaurée. Appuyez sur Lecture pour reprendre.",
+            statusMessage = if (saved.screen == GameScreen.NIGHT_READY) {
+                "Partie restaurée. Lancez la nuit lorsque tout est prêt."
+            } else {
+                "Partie restaurée. Appuyez sur Lecture pour reprendre."
+            },
         )
         if (saved.screen == GameScreen.INTRO || saved.screen == GameScreen.NIGHT) {
             loadSequenceFor(saved, autoplay = false)
@@ -207,6 +226,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         ) {
             return
         }
+        if (
+            cue.id == ConfirmedLaterNightTimeline.CUE_ID &&
+            !ConfirmedLaterNightTimeline.canReplay(_uiState.value.cueRemainingMillis)
+        ) {
+            return
+        }
         stopSequenceClock()
         audioEngine.stopForeground()
         updateSessionPlayback(
@@ -224,7 +249,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 _uiState.value.cueRemainingMillis,
             )
             if (target != null) {
-                jumpConfirmedFirstNight(target)
+                jumpTimedNight(target)
+            } else {
+                advanceCue()
+            }
+            return
+        }
+        if (cue.id == ConfirmedLaterNightTimeline.CUE_ID) {
+            val target = ConfirmedLaterNightTimeline.advanceTarget(
+                _uiState.value.cueRemainingMillis,
+            )
+            if (target != null) {
+                jumpTimedNight(target)
             } else {
                 advanceCue()
             }
@@ -406,7 +442,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val color = current.nextNightColor ?: return
         stopAllPlayback()
         val session = current.copy(
-            screen = GameScreen.NIGHT,
+            screen = GameScreen.NIGHT_READY,
             round = current.round + 1,
             currentNightColor = color,
             nextNightColor = null,
@@ -421,6 +457,22 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             isSequenceComplete = false,
             statusMessage = null,
             standaloneCueId = null,
+        )
+    }
+
+    fun launchNextNight() {
+        val current = _uiState.value.session
+        if (current.screen != GameScreen.NIGHT_READY || current.currentNightColor == null) return
+        val session = current.copy(
+            screen = GameScreen.NIGHT,
+            cueIndex = 0,
+            cueRemainingMillis = 0L,
+        )
+        repository.save(session)
+        _uiState.value = _uiState.value.copy(
+            session = session,
+            isSequenceComplete = false,
+            statusMessage = null,
         )
         loadSequenceFor(session, autoplay = true)
     }
@@ -577,7 +629,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun isAudioAvailable(cue: GameCue): Boolean =
         audioEngine.hasResource(cue.audioResource)
 
-    private fun jumpConfirmedFirstNight(remainingMillis: Long) {
+    private fun jumpTimedNight(remainingMillis: Long) {
         stopSequenceClock()
         audioEngine.stopForeground()
         val session = _uiState.value.session.copy(
@@ -593,10 +645,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun playbackResourceFor(cue: GameCue, remainingMillis: Long): String =
-        if (cue.id == ConfirmedFirstNightTimeline.CUE_ID) {
-            ConfirmedFirstNightTimeline.playback(remainingMillis).audioResource
-        } else {
-            cue.audioResource
+        when (cue.id) {
+            ConfirmedFirstNightTimeline.CUE_ID ->
+                ConfirmedFirstNightTimeline.playback(remainingMillis).audioResource
+            ConfirmedLaterNightTimeline.CUE_ID ->
+                ConfirmedLaterNightTimeline.playback(remainingMillis).audioResource
+            else -> cue.audioResource
         }
 
     private fun loadSequenceFor(session: GameSession, autoplay: Boolean) {
@@ -658,12 +712,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
         val fallbackTotal = cue.fallbackDurationMillis
         val fallbackElapsed = (fallbackTotal - requestedRemaining).coerceAtLeast(0L)
-        val firstNightPlayback = if (cue.id == ConfirmedFirstNightTimeline.CUE_ID) {
-            ConfirmedFirstNightTimeline.playback(requestedRemaining)
-        } else {
-            null
+        val timedNightPlayback = when (cue.id) {
+            ConfirmedFirstNightTimeline.CUE_ID ->
+                ConfirmedFirstNightTimeline.playback(requestedRemaining)
+            ConfirmedLaterNightTimeline.CUE_ID ->
+                ConfirmedLaterNightTimeline.playback(requestedRemaining)
+            else -> null
         }
-        val ambiencePlayback = if (firstNightPlayback != null) {
+        val ambiencePlayback = if (timedNightPlayback != null) {
             audioEngine.stopAmbience()
             null
         } else {
@@ -676,9 +732,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             ambiencePlayback ?: PlaybackInfo(available = false, durationMillis = 0L)
         } else {
             audioEngine.playForeground(
-                resourceName = firstNightPlayback?.audioResource ?: cue.audioResource,
+                resourceName = timedNightPlayback?.audioResource ?: cue.audioResource,
                 looping = cue.loopAudio,
-                seekMillis = firstNightPlayback?.seekMillis ?: fallbackElapsed,
+                seekMillis = timedNightPlayback?.seekMillis ?: fallbackElapsed,
             )
         }
         val total = when {

@@ -16,8 +16,8 @@ object HealingEffectRules {
                 "le sac pour mélanger les pierres puis tire au hasard une nouvelle pierre. " +
                 "Il redevient villageois ou reste goule."
         HealingOutcome.WEREWOLF ->
-            "La guérison a révélé que ce villageois était un loup-garou. Nous avons réussi " +
-                "à guérir son corps mais peut-être pas son âme.\n" +
+            "La guérison a révélé que ce villageois était un loup-garou. Le rituel est " +
+                "parvenu à guérir son corps mais peut-être pas son âme.\n" +
                 "Le joueur repose sa pierre violette dans la boîte des loups puis tire au " +
                 "hasard une nouvelle pierre du sac de guérison. Il redevient villageois ou " +
                 "devient goule."

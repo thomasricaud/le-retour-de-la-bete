@@ -15,13 +15,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,7 +41,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.leretourdelabete.GameUiState
 import fr.leretourdelabete.GameViewModel
+import fr.leretourdelabete.R
 import fr.leretourdelabete.domain.ConfirmedFirstNightTimeline
+import fr.leretourdelabete.domain.ConfirmedLaterNightTimeline
 import fr.leretourdelabete.domain.GameSequenceFactory
 import fr.leretourdelabete.domain.HealingEffectRules
 import fr.leretourdelabete.model.DayStage
@@ -53,6 +58,7 @@ import fr.leretourdelabete.ui.theme.Bone
 import fr.leretourdelabete.ui.theme.GhoulGreen
 import fr.leretourdelabete.ui.theme.MoonYellow
 import fr.leretourdelabete.ui.theme.Parchment
+import kotlinx.coroutines.delay
 
 @Composable
 fun SequenceScreen(
@@ -61,8 +67,23 @@ fun SequenceScreen(
 ) {
     var showStopDialog by remember { mutableStateOf(false) }
     var showPackDialog by remember { mutableStateOf(false) }
+    var showPackConfirmation by remember { mutableStateOf(false) }
     val session = state.session
     val isIntro = session.screen == GameScreen.INTRO
+    val isConfirmedLaterNight =
+        state.currentCue?.id == ConfirmedLaterNightTimeline.CUE_ID
+    val canCallPack = isConfirmedLaterNight &&
+        ConfirmedLaterNightTimeline.canCall(state.cueRemainingMillis)
+
+    LaunchedEffect(canCallPack) {
+        if (!canCallPack) showPackConfirmation = false
+    }
+    LaunchedEffect(showPackConfirmation) {
+        if (showPackConfirmation) {
+            delay(10_000L)
+            showPackConfirmation = false
+        }
+    }
 
     GameBackdrop(nightColor = session.currentNightColor) {
         Column(
@@ -88,12 +109,13 @@ fun SequenceScreen(
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     AudioRouteBadge(state.audioRoute)
-                    if (!isIntro && session.round > 1) {
+                    if (canCallPack) {
                         LargeActionButton(
-                            label = "APPEL DE LA MEUTE · ≤ " +
-                                "${session.packCallVillagerLimit} VILLAGEOIS",
-                            onClick = { showPackDialog = true },
+                            label = "APPEL",
+                            onClick = { showPackConfirmation = true },
                             tone = ActionTone.DANGER,
+                            iconRes = R.drawable.app_emblem,
+                            showLabelWithIcon = true,
                         )
                     }
                 }
@@ -117,7 +139,7 @@ fun SequenceScreen(
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
                             Text(
-                                "Tout est prêt",
+                                "Tout est prêt ?",
                                 style = MaterialTheme.typography.displayMedium,
                                 color = Bone,
                             )
@@ -147,6 +169,13 @@ fun SequenceScreen(
                         viewModel.pauseForStopDialog()
                         showStopDialog = true
                     },
+                    showPackConfirmation = showPackConfirmation,
+                    packCallVillagerLimit = session.packCallVillagerLimit,
+                    onCancelPackCall = { showPackConfirmation = false },
+                    onConfirmPackCall = {
+                        showPackConfirmation = false
+                        showPackDialog = true
+                    },
                 )
             }
         }
@@ -168,7 +197,6 @@ fun SequenceScreen(
 
     if (showPackDialog) {
         PackCallDialog(
-            playerCount = session.playerCount,
             villagerLimit = session.packCallVillagerLimit,
             onDismiss = { showPackDialog = false },
             onSuccess = {
@@ -190,22 +218,42 @@ private fun ColumnScope.SequenceController(
     onPlayPause: () -> Unit,
     onSkip: () -> Unit,
     onStop: () -> Unit,
+    showPackConfirmation: Boolean,
+    packCallVillagerLimit: Int,
+    onCancelPackCall: () -> Unit,
+    onConfirmPackCall: () -> Unit,
 ) {
     val cue = state.currentCue
     val isConfirmedFirstNight = cue?.id == ConfirmedFirstNightTimeline.CUE_ID
-    val firstNightPresentation = if (isConfirmedFirstNight) {
-        ConfirmedFirstNightTimeline.presentation(state.cueRemainingMillis)
-    } else {
-        null
+    val isConfirmedLaterNight = cue?.id == ConfirmedLaterNightTimeline.CUE_ID
+    val presentation = when {
+        isConfirmedFirstNight ->
+            ConfirmedFirstNightTimeline.presentation(state.cueRemainingMillis)
+        isConfirmedLaterNight && state.session.currentNightColor != null ->
+            ConfirmedLaterNightTimeline.presentation(
+                remainingMillis = state.cueRemainingMillis,
+                color = state.session.currentNightColor,
+                packCallVillagerLimit = packCallVillagerLimit,
+            )
+        else -> null
     }
     val canReplay = cue?.replayable == true && (
-        !isConfirmedFirstNight ||
-            ConfirmedFirstNightTimeline.canReplay(state.cueRemainingMillis)
+        when {
+            isConfirmedFirstNight ->
+                ConfirmedFirstNightTimeline.canReplay(state.cueRemainingMillis)
+            isConfirmedLaterNight ->
+                ConfirmedLaterNightTimeline.canReplay(state.cueRemainingMillis)
+            else -> true
+        }
         )
-    val skipLabel = if (
-        isConfirmedFirstNight &&
-        ConfirmedFirstNightTimeline.advanceTarget(state.cueRemainingMillis) != null
-    ) {
+    val canAdvance = when {
+        isConfirmedFirstNight ->
+            ConfirmedFirstNightTimeline.advanceTarget(state.cueRemainingMillis) != null
+        isConfirmedLaterNight ->
+            ConfirmedLaterNightTimeline.advanceTarget(state.cueRemainingMillis) != null
+        else -> false
+    }
+    val skipLabel = if (canAdvance) {
         "AVANCER"
     } else {
         "PASSER"
@@ -228,44 +276,77 @@ private fun ColumnScope.SequenceController(
                 .fillMaxHeight(0.9f),
             containerAlpha = 0.64f,
         ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    firstNightPresentation?.title ?: cue?.title.orEmpty(),
-                    style = MaterialTheme.typography.displayMedium,
-                    color = Bone,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(14.dp))
-                Text(
-                    firstNightPresentation?.text ?: cue?.text.orEmpty(),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Parchment,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(0.9f),
-                )
-                Spacer(Modifier.height(22.dp))
-                Text(
-                    formatDuration(state.cueRemainingMillis),
-                    fontSize = 48.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                )
-                Spacer(Modifier.height(10.dp))
-                LinearProgressIndicator(
-                    progress = { progress.coerceIn(0f, 1f) },
+            if (showPackConfirmation) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        "Pensez-vous vraiment qu'il reste $packCallVillagerLimit " +
+                            "villageois ou moins ?",
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = Bone,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(0.88f),
+                    )
+                    Spacer(Modifier.height(24.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(0.88f),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        LargeActionButton(
+                            label = "OUI",
+                            onClick = onConfirmPackCall,
+                            modifier = Modifier.weight(1f),
+                        )
+                        LargeActionButton(
+                            label = "NON",
+                            onClick = onCancelPackCall,
+                            modifier = Modifier.weight(1f),
+                            tone = ActionTone.SECONDARY,
+                        )
+                    }
+                }
+            } else {
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth(0.78f)
-                        .height(7.dp),
-                    color = BloodRedBright,
-                    trackColor = Parchment.copy(alpha = 0.18f),
-                )
-                if (!state.currentCueHasAudio) {
-                    Spacer(Modifier.height(14.dp))
-                    Tag("AUDIO À FOURNIR", color = MoonYellow)
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterVertically),
+                ) {
+                    Text(
+                        presentation?.title ?: cue?.title.orEmpty(),
+                        style = MaterialTheme.typography.displayMedium,
+                        color = Bone,
+                        textAlign = TextAlign.Center,
+                    )
+                    Text(
+                        presentation?.text ?: cue?.text.orEmpty(),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Parchment,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(0.9f),
+                    )
+                    Text(
+                        formatDuration(state.cueRemainingMillis),
+                        fontSize = 48.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                    )
+                    LinearProgressIndicator(
+                        progress = { progress.coerceIn(0f, 1f) },
+                        modifier = Modifier
+                            .fillMaxWidth(0.78f)
+                            .height(7.dp),
+                        color = BloodRedBright,
+                        trackColor = Parchment.copy(alpha = 0.18f),
+                    )
+                    if (!state.currentCueHasAudio) {
+                        Tag("AUDIO À FOURNIR", color = MoonYellow)
+                    }
                 }
             }
         }
@@ -282,26 +363,106 @@ private fun ColumnScope.SequenceController(
                     onReplay,
                     Modifier.fillMaxWidth(),
                     ActionTone.SECONDARY,
+                    enabled = !showPackConfirmation,
                 )
             }
             LargeActionButton(
                 if (state.isSequencePlaying) "PAUSE" else "LECTURE",
                 onPlayPause,
                 Modifier.fillMaxWidth(),
+                enabled = !showPackConfirmation,
             )
             LargeActionButton(
                 skipLabel,
                 onSkip,
                 Modifier.fillMaxWidth(),
                 ActionTone.SECONDARY,
-                enabled = cue?.skippable == true,
+                enabled = cue?.skippable == true && !showPackConfirmation,
             )
             LargeActionButton(
                 "ARRÊTER",
                 onStop,
                 Modifier.fillMaxWidth(),
                 ActionTone.DANGER,
+                enabled = !showPackConfirmation,
             )
+        }
+    }
+}
+
+@Composable
+fun NightReadyScreen(
+    state: GameUiState,
+    viewModel: GameViewModel,
+) {
+    val session = state.session
+    val colorWord = if (session.currentNightColor == NightColor.YELLOW) {
+        "jaunes"
+    } else {
+        "vertes"
+    }
+    GameBackdrop(nightColor = session.currentNightColor) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Tag("TOUR ${session.round}", Parchment)
+                    NightColorLabel(session.currentNightColor)
+                }
+                AudioRouteBadge(state.audioRoute)
+            }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                GlassPanel(
+                    modifier = Modifier
+                        .fillMaxWidth(0.76f)
+                        .fillMaxHeight(0.84f),
+                    containerAlpha = 0.64f,
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(
+                            18.dp,
+                            Alignment.CenterVertically,
+                        ),
+                    ) {
+                        Text(
+                            "Tout est prêt ?",
+                            style = MaterialTheme.typography.displayMedium,
+                            color = Bone,
+                            textAlign = TextAlign.Center,
+                        )
+                        Text(
+                            "Cette nuit, il y aura un conseil des loups. Les éventuels " +
+                                "loups-garous et goules $colorWord vont se réveiller et rejoindre " +
+                                "le loup-garou de sang en présentant leurs pierres.",
+                            color = Parchment,
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.fillMaxWidth(0.88f),
+                        )
+                        LargeActionButton(
+                            label = "LANCER LA ${frenchOrdinal(session.round).uppercase()} NUIT",
+                            onClick = viewModel::launchNextNight,
+                            modifier = Modifier.fillMaxWidth(0.72f),
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -391,15 +552,16 @@ private fun DiscussionStage(
     viewModel: GameViewModel,
 ) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Text("Concertation du village", style = MaterialTheme.typography.displayMedium)
         Spacer(Modifier.height(10.dp))
         Text(
-            "Qui est suspect ? Qui est le loup-garou de sang ? " +
-                "Échangez librement, en groupe ou séparément.",
+            "Échangez librement, en groupe ou séparément.",
             color = Parchment,
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodyLarge,
@@ -449,7 +611,9 @@ private fun CouncilStage(
     viewModel: GameViewModel,
 ) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -572,7 +736,9 @@ private fun HealingEffectStage(
 ) {
     val text = HealingEffectRules.text(state.session.healingOutcome)
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -628,6 +794,7 @@ fun DrawScreen(
     state: GameUiState,
     viewModel: GameViewModel,
 ) {
+    var showStopDialog by remember { mutableStateOf(false) }
     val session = state.session
     val nextColor = session.nextNightColor
     GameBackdrop(nightColor = nextColor) {
@@ -648,9 +815,12 @@ fun DrawScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     AudioRouteBadge(state.audioRoute)
                     LargeActionButton(
-                        "PAUSE ET ACCUEIL",
-                        viewModel::pauseAndReturnHome,
-                        tone = ActionTone.SECONDARY,
+                        "ARRÊTER",
+                        {
+                            viewModel.pauseForStopDialog()
+                            showStopDialog = true
+                        },
+                        tone = ActionTone.DANGER,
                     )
                 }
             }
@@ -666,6 +836,9 @@ fun DrawScreen(
                     containerAlpha = 0.64f,
                 ) {
                     Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState()),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(18.dp),
                     ) {
@@ -704,17 +877,19 @@ fun DrawScreen(
                                     "Retournez la carte physique puis indiquez sa couleur.",
                                     color = Parchment,
                                     style = MaterialTheme.typography.bodyLarge,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth(),
                                 )
                                 Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                                     LargeActionButton(
                                         "NUIT JAUNE",
                                         { viewModel.choosePhysicalNight(NightColor.YELLOW) },
-                                        tone = ActionTone.SECONDARY,
+                                        tone = ActionTone.YELLOW,
                                     )
                                     LargeActionButton(
                                         "NUIT VERTE",
                                         { viewModel.choosePhysicalNight(NightColor.GREEN) },
-                                        tone = ActionTone.SECONDARY,
+                                        tone = ActionTone.GREEN,
                                     )
                                 }
                             }
@@ -745,6 +920,20 @@ fun DrawScreen(
             }
         }
     }
+
+    if (showStopDialog) {
+        StopDialog(
+            onDismiss = { showStopDialog = false },
+            onPauseHome = {
+                showStopDialog = false
+                viewModel.pauseAndReturnHome()
+            },
+            onAbandon = {
+                showStopDialog = false
+                viewModel.finishGame(EndReason.ABANDONED)
+            },
+        )
+    }
 }
 
 @Composable
@@ -753,7 +942,6 @@ fun EndScreen(
     viewModel: GameViewModel,
 ) {
     val reason = state.session.endReason ?: EndReason.ABANDONED
-    val playerCount = state.session.playerCount
     val packCallVillagerLimit = state.session.packCallVillagerLimit
     val isDay = reason == EndReason.BLOOD_WOLF_FOUND ||
         reason == EndReason.PACK_CALL_FAILURE
@@ -762,22 +950,27 @@ fun EndScreen(
     val cue = when (reason) {
         EndReason.BLOOD_WOLF_FOUND -> {
             title = "La Bête est vaincue"
-            text = "Le loup-garou de sang a été découvert pendant la guérison. Les villageois " +
-                "gagnent et tentent maintenant de guérir les loups et les goules."
+            text = "Le loup-garou de sang s'est révélé lors de la guérison et a été abattu. " +
+                "Les villageois gagnent et tentent maintenant de guérir les loups-garous et " +
+                "les goules. En cas d'échec de la guérison, c'est l'asile psychiatrique pour " +
+                "ces pauvres âmes."
             GameSequenceFactory.endCue("blood_wolf_found", packCallVillagerLimit)
         }
         EndReason.PACK_CALL_SUCCESS -> {
             title = "La meute triomphe"
-            text = "L'appel était juste : il restait $packCallVillagerLimit villageois ou moins " +
-                "(seuil pour $playerCount joueurs). Le loup-garou de sang et les loups gagnent. " +
-                "Résolvez maintenant le sort des goules."
+            text = "L'appel était juste : il restait $packCallVillagerLimit villageois ou " +
+                "moins. Le loup-garou de sang et les loups gagnent. Les villageois restant " +
+                "sont dévorés. Résolvez maintenant le sort des goules : seront-elles " +
+                "remordues pour faire partie de la meute ou dévorées également ?"
             GameSequenceFactory.endCue("pack_success", packCallVillagerLimit)
         }
         EndReason.PACK_CALL_FAILURE -> {
             title = "Le village se soulève"
-            text = "Plus de $packCallVillagerLimit villageois dormaient encore " +
-                "(seuil pour $playerCount joueurs). L'appel était une erreur : le village tue " +
-                "le loup-garou de sang et sa meute."
+            text = "Erreur de la Bête ! Plus de $packCallVillagerLimit villageois dormaient " +
+                "encore. Le village se réveille et tue le loup-garou de sang et sa meute de " +
+                "loups-garous. Les villageois gagnent et tentent maintenant de guérir les " +
+                "goules. En cas d'échec de la guérison, c'est l'asile psychiatrique pour ces " +
+                "pauvres âmes."
             GameSequenceFactory.endCue("pack_failure", packCallVillagerLimit)
         }
         EndReason.ABANDONED -> {
@@ -799,6 +992,7 @@ fun EndScreen(
                 containerAlpha = 0.64f,
             ) {
                 Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
@@ -873,7 +1067,6 @@ private fun StopDialog(
 
 @Composable
 private fun PackCallDialog(
-    playerCount: Int,
     villagerLimit: Int,
     onDismiss: () -> Unit,
     onSuccess: () -> Unit,
@@ -881,12 +1074,12 @@ private fun PackCallDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("« Venez à moi, ma meute… »") },
+        title = { Text("Venez à moi, ma meute, mes adorateurs !") },
         text = {
             Text(
-                "Pour $playerCount joueurs, l'appel est juste s'il reste $villagerLimit " +
-                    "villageois ou moins. Toutes les goules rejoignent le conseil. Sans saisir " +
-                    "aucun rôle, indiquez simplement si l'appel était juste.",
+                "Toutes les goules jaunes et vertes rejoignent le conseil des loups.\n" +
+                    "Comptez alors le nombre de villageois restés endormis.",
+                modifier = Modifier.verticalScroll(rememberScrollState()),
             )
         },
         confirmButton = {
@@ -905,4 +1098,18 @@ private fun PackCallDialog(
             }
         },
     )
+}
+
+private fun frenchOrdinal(round: Int): String = when (round) {
+    1 -> "première"
+    2 -> "deuxième"
+    3 -> "troisième"
+    4 -> "quatrième"
+    5 -> "cinquième"
+    6 -> "sixième"
+    7 -> "septième"
+    8 -> "huitième"
+    9 -> "neuvième"
+    10 -> "dixième"
+    else -> "${round}e"
 }

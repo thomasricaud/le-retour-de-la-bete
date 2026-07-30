@@ -51,6 +51,8 @@ enum class ActionTone {
     PRIMARY,
     SECONDARY,
     DANGER,
+    YELLOW,
+    GREEN,
 }
 
 @Composable
@@ -131,12 +133,16 @@ fun LargeActionButton(
     tone: ActionTone = ActionTone.PRIMARY,
     enabled: Boolean = true,
     @DrawableRes iconRes: Int? = null,
+    showLabelWithIcon: Boolean = false,
 ) {
     val container = when (tone) {
         ActionTone.PRIMARY -> BloodRedBright
         ActionTone.SECONDARY -> Color(0xFF273D50)
         ActionTone.DANGER -> Color(0xFF6F1922)
+        ActionTone.YELLOW -> MoonYellow
+        ActionTone.GREEN -> GhoulGreen
     }
+    val contentColor = if (tone == ActionTone.YELLOW) NightInk else Color.White
     Button(
         onClick = onClick,
         enabled = enabled,
@@ -145,7 +151,7 @@ fun LargeActionButton(
         contentPadding = PaddingValues(horizontal = 22.dp, vertical = 14.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = container,
-            contentColor = Color.White,
+            contentColor = contentColor,
             disabledContainerColor = Color(0xFF26313A),
             disabledContentColor = Color(0xFF7E8992),
         ),
@@ -155,13 +161,20 @@ fun LargeActionButton(
                 painter = painterResource(iconRes),
                 contentDescription = label,
                 modifier = Modifier.size(28.dp),
-                colorFilter = ColorFilter.tint(Color.White),
+                colorFilter = if (iconRes == R.drawable.ic_bluetooth) {
+                    ColorFilter.tint(contentColor)
+                } else {
+                    null
+                },
             )
-        } else {
+        }
+        if (iconRes == null || showLabelWithIcon) {
+            if (iconRes != null) Spacer(Modifier.width(10.dp))
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelLarge,
                 textAlign = TextAlign.Center,
+                modifier = if (showLabelWithIcon) Modifier else Modifier.fillMaxWidth(),
             )
         }
     }
@@ -189,7 +202,11 @@ fun ToggleChoice(
         ),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
     ) {
-        Text(label, fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium)
+        Text(
+            text = label,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 

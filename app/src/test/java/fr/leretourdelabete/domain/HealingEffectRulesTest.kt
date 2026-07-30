@@ -22,5 +22,8 @@ class HealingEffectRulesTest {
         assertTrue("pierre jaune ou verte dans le sac de guérison" in ghoul)
         assertTrue("pierre violette dans la boîte des loups" in werewolf)
         assertTrue("loup-garou" in werewolf)
+        assertTrue(
+            "Le rituel est parvenu à guérir son corps mais peut-être pas son âme." in werewolf,
+        )
     }
 }

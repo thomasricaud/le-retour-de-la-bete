@@ -17,8 +17,10 @@ enum class NightColor {
 
 enum class GameScreen {
     HOME,
+    BLUETOOTH_SETUP,
     SETUP,
     INTRO,
+    NIGHT_READY,
     NIGHT,
     DAY,
     DRAW,
@@ -74,6 +76,7 @@ data class GameSession(
     val isResumable: Boolean
         get() = screen in setOf(
             GameScreen.INTRO,
+            GameScreen.NIGHT_READY,
             GameScreen.NIGHT,
             GameScreen.DAY,
             GameScreen.DRAW,
