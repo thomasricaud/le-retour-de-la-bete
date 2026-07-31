@@ -11,16 +11,25 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #07111d;
       color: #f4e9d3;
+      --muted: #d7c7a6;
+      --muted-cold: #9eafba;
+      --green: #67d49a;
+      --green-line: #2d7658;
+      --blue: #9ed6e5;
+      --red: #cd4050;
     }
+
     * { box-sizing: border-box; }
+
     body {
       min-height: 100vh;
       margin: 0;
       padding: 24px;
       background:
-        radial-gradient(circle at 50% 15%, #24394d 0, #07111d 48%),
+        radial-gradient(circle at 50% 12%, #24394d 0, #07111d 48%),
         #07111d;
     }
+
     main {
       width: min(1040px, 100%);
       margin: 0 auto;
@@ -31,47 +40,258 @@
       background: #0a1825ee;
       box-shadow: 0 24px 80px #0009;
     }
+
     .emblem {
-      width: 180px;
-      max-width: 55%;
+      width: 160px;
+      max-width: 52%;
       border-radius: 24px;
     }
+
     h1 {
       margin: 20px 0 8px;
       font-family: Georgia, serif;
       font-size: clamp(2rem, 8vw, 3.3rem);
     }
-    p { color: #d7c7a6; line-height: 1.55; }
-    a.download {
-      display: inline-block;
-      min-width: min(420px, 100%);
-      margin: 28px 0 14px;
-      padding: 18px 22px;
+
+    p { color: var(--muted); line-height: 1.55; }
+
+    .download {
+      display: inline-flex;
+      width: min(520px, 100%);
+      min-height: 56px;
+      align-items: center;
+      justify-content: center;
+      margin: 28px 0 0;
+      padding: 16px 22px;
+      border: 1px solid #ed6975;
       border-radius: 14px;
-      background: #cd4050;
+      background: var(--red);
       color: white;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 800;
       text-decoration: none;
+      box-shadow: 0 12px 32px #9b26344d;
     }
-    a.checksum { color: #d7c7a6; }
+
+    .download:hover { background: #df4b5a; }
+
+    .download:focus-visible,
+    .report-link:focus-visible,
+    details summary:focus-visible {
+      outline: 3px solid white;
+      outline-offset: 3px;
+    }
+
+    .download-note {
+      margin: 9px 0 0;
+      color: var(--muted-cold);
+      font-size: .8rem;
+    }
+
     .security {
-      margin-top: 30px;
-      padding: 22px;
+      margin-top: 22px;
+      padding: 16px 18px;
       text-align: left;
-      border: 1px solid #3f6672;
-      border-radius: 18px;
-      background: #0d2230;
+      border: 1px solid var(--green-line);
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 100% 0, #28664a2f 0, transparent 32%),
+        linear-gradient(145deg, #102427 0%, #0c1e28 100%);
     }
-    .security h2 { margin-top: 0; color: #f4e9d3; }
-    .security a { color: #9ed6e5; }
-    .security li { margin: 10px 0; line-height: 1.45; }
+
+    .security.unavailable {
+      border-color: #8d7544;
+      background: linear-gradient(145deg, #292419 0%, #171d24 100%);
+    }
+
+    .security-header {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 13px;
+    }
+
+    .security-icon {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border: 1px solid #75dca4;
+      border-radius: 50%;
+      background: #123d32;
+      color: #b8ffd7;
+      font-size: 1.08rem;
+      font-weight: 900;
+      box-shadow: 0 0 0 5px #4fc68b0e;
+    }
+
+    .unavailable .security-icon {
+      border-color: #c3a259;
+      background: #443716;
+      color: #ffe09b;
+      box-shadow: none;
+    }
+
+    .security-label {
+      margin: 0 0 3px;
+      color: #a9ebc6;
+      font-size: .68rem;
+      font-weight: 800;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .unavailable .security-label { color: #e6c77d; }
+
+    .security h2 {
+      margin: 0;
+      color: #f8f1e4;
+      font-size: clamp(1.02rem, 2.5vw, 1.22rem);
+      line-height: 1.18;
+    }
+
+    .security-metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 8px;
+      margin: 5px 0 0;
+      color: #c8d8d2;
+      font-size: .8rem;
+      line-height: 1.35;
+    }
+
+    .security-metrics strong { color: #92edb8; }
+    .metric-separator { color: #5d7b78; }
+
+    .report-link {
+      padding: 8px 11px;
+      border: 1px solid #4f6f78;
+      border-radius: 10px;
+      color: var(--blue);
+      font-size: .78rem;
+      font-weight: 750;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .report-link:hover { background: #17303a; }
+
+    .analysis-date {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 10px 0 0 49px;
+      color: #aebfbc;
+      font-size: .76rem;
+    }
+
+    .status-dot {
+      flex: 0 0 auto;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 5px #67d49a1c;
+    }
+
+    .unavailable .status-dot {
+      background: #d8b55c;
+      box-shadow: 0 0 0 5px #d8b55c1c;
+    }
+
+    details {
+      margin-top: 12px;
+      border-top: 1px solid #355362;
+    }
+
+    details summary {
+      display: flex;
+      min-height: 42px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 10px 0 4px;
+      color: #dce9ec;
+      cursor: pointer;
+      font-size: .8rem;
+      font-weight: 730;
+      list-style: none;
+    }
+
+    details summary::-webkit-details-marker { display: none; }
+    details summary::after { content: "+"; color: var(--blue); font-size: 1.3rem; }
+    details[open] summary::after { content: "−"; }
+
+    .proof-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 0;
+      padding: 8px 0 12px;
+      list-style: none;
+    }
+
+    .proof-grid li {
+      position: relative;
+      min-height: 58px;
+      padding: 12px 12px 12px 38px;
+      border: 1px solid #294854;
+      border-radius: 11px;
+      background: #0d222d;
+      color: #cbd9dc;
+      font-size: .87rem;
+      line-height: 1.35;
+    }
+
+    .proof-grid li::before {
+      content: "✓";
+      position: absolute;
+      top: 12px;
+      left: 13px;
+      color: var(--green);
+      font-weight: 900;
+    }
+
+    .proof-grid strong { color: #f0eadf; }
+
+    .limits {
+      margin: 0 0 12px;
+      color: var(--muted-cold);
+      font-size: .78rem;
+      line-height: 1.5;
+    }
+
+    .security-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 9px 18px;
+      margin: 0 0 12px;
+      font-size: .8rem;
+    }
+
+    .security a { color: var(--blue); text-underline-offset: 3px; }
+
+    .install-note {
+      margin: 24px 0 0;
+      padding: 15px 18px;
+      border: 1px solid #5c5360;
+      border-radius: 14px;
+      background: #141b27;
+      color: #c9c1b4;
+      font-size: .84rem;
+      line-height: 1.5;
+    }
+
+    .install-note strong { color: #f3e8d5; }
+
     .gallery {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 18px;
       margin-top: 34px;
     }
+
     figure {
       margin: 0;
       overflow: hidden;
@@ -79,29 +299,39 @@
       border-radius: 18px;
       background: #07111d;
     }
+
     figure img {
       display: block;
       width: 100%;
       aspect-ratio: 3 / 2;
       object-fit: cover;
     }
+
     figcaption {
       padding: 12px;
       color: #f4e9d3;
       font-weight: 700;
     }
+
     .credits {
       margin-top: 30px;
       padding-top: 24px;
       border-top: 1px solid #705c5f;
     }
+
     .credits strong { color: #f4e9d3; }
-    .credits a { color: #d7c7a6; }
-    small { display: block; margin-top: 26px; color: #9aa8b5; }
+    .credits a { color: var(--muted); }
+
     @media (max-width: 700px) {
       body { padding: 12px; }
       main { padding: 22px 16px; }
-      .gallery { grid-template-columns: 1fr; }
+      .security { padding: 14px; }
+      .security-header { grid-template-columns: auto minmax(0, 1fr); gap: 11px; }
+      .report-link { grid-column: 2; justify-self: start; }
+      .analysis-date { margin-left: 47px; }
+      .metric-separator { display: none; }
+      .security-metrics span { flex-basis: 100%; }
+      .proof-grid, .gallery { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -110,58 +340,68 @@
     <img class="emblem" src="app_emblem.webp" alt="">
     <h1>Le Retour de la Bête</h1>
     <p>Conducteur sonore Android hors ligne pour lancer et guider une partie.</p>
+
     <a class="download" href="le-retour-de-la-bete.apk" download>
       Télécharger l’application Android
     </a>
-    <a class="checksum" href="le-retour-de-la-bete.apk.sha256">
-      Vérifier l’empreinte SHA-256
-    </a>
-    <small>
-      Android peut demander d’autoriser temporairement l’installation depuis
-      la source choisie. Conservez toujours Google Play Protect activé.
-    </small>
-    <section class="security" aria-labelledby="security-title">
-      <h2 id="security-title">Sécurité et vérification</h2>
-      <p>
-        L’application est construite publiquement à partir de son code source.
-        Ne poursuivez pas l’installation si Play Protect signale l’APK comme
-        dangereux.
+    <p class="download-note">
+      Version <span data-security-version>0.4.6</span> · Android 8.0 ou version ultérieure
+    </p>
+
+    <section class="security" id="security-card" aria-labelledby="security-title" aria-live="polite">
+      <div class="security-header">
+        <div class="security-icon" id="security-icon" aria-hidden="true">✓</div>
+        <div>
+          <p class="security-label">Sécurité du build</p>
+          <h2 id="security-title">Aucun problème connu détecté</h2>
+          <p class="security-metrics" id="security-metrics">
+            <span><strong id="vulnerability-count">0</strong> vulnérabilité connue</span>
+            <span class="metric-separator" aria-hidden="true">•</span>
+            <span><strong>CodeQL et OSV</strong> réussis</span>
+            <span class="metric-separator" aria-hidden="true">•</span>
+            <span><strong id="component-count">85</strong> composants analysés</span>
+          </p>
+        </div>
+        <a class="report-link" href="security-report.md">Voir le rapport</a>
+      </div>
+
+      <p class="analysis-date">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="analysis-date">Analyse du build publiée le 31 juillet 2026 à 23:02</span>
       </p>
-      <ul>
-        <li>
-          <a href="https://github.com/thomasricaud/le-retour-de-la-bete">
-            Consulter le code source et les dépendances
-          </a>
-        </li>
-        <li>
-          <a href="le-retour-de-la-bete.cdx.json">
-            Télécharger la nomenclature logicielle CycloneDX (SBOM)
-          </a>
-        </li>
-        <li>
-          <a href="security-report.md">
-            Lire le dernier rapport public de sécurité OSV
-          </a>
-          (<a href="security-report.json">JSON</a>,
-          <a href="osv-results.json">résultats complets</a>)
-        </li>
-        <li>
-          <a href="le-retour-de-la-bete.apk.sha256">
-            Comparer l’empreinte SHA-256 de l’APK
-          </a>
-        </li>
-        <li>
-          <a href="le-retour-de-la-bete.apk.cert.sha256">
-            Comparer l’empreinte du certificat de signature
-          </a>
-        </li>
-        <li>
-          <a href="https://github.com/thomasricaud/le-retour-de-la-bete/actions">
-            Vérifier les tests, l’analyse de sécurité et la provenance du build
-          </a>
-        </li>
-      </ul>
+
+      <details>
+        <summary>Vérifications et attestations du build</summary>
+        <ul class="proof-grid">
+          <li><strong>Tests et Android Lint</strong><br>Exécutés avant publication</li>
+          <li><strong>CodeQL et OSV</strong><br>Code et dépendances analysés</li>
+          <li><strong>Signature Android</strong><br>Certificat officiel vérifié</li>
+          <li><strong>Empreinte SHA-256</strong><br>Intégrité de l’APK vérifiable</li>
+          <li><strong>SBOM CycloneDX 1.6</strong><br>Composants documentés</li>
+          <li><strong>Résultats SARIF et JSON</strong><br>Rapports lisibles par des outils</li>
+          <li><strong>Attestation de provenance</strong><br>Build relié au dépôt et au commit</li>
+          <li><strong>Attestation du SBOM</strong><br>Dépendances reliées à l’APK publié</li>
+        </ul>
+        <p class="limits">
+          Ces contrôles recherchent les vulnérabilités connues à la date
+          indiquée. Ils réduisent fortement les risques sans garantir l’absence
+          de toute faille inconnue.
+        </p>
+        <nav class="security-links" aria-label="Fichiers de vérification">
+          <a href="le-retour-de-la-bete.cdx.json">Voir le SBOM</a>
+          <a href="le-retour-de-la-bete.apk.sha256">Vérifier l’empreinte</a>
+          <a href="le-retour-de-la-bete.apk.cert.sha256">Voir le certificat</a>
+          <a href="https://github.com/thomasricaud/le-retour-de-la-bete/actions">Voir les builds publics</a>
+        </nav>
+      </details>
     </section>
+
+    <p class="install-note">
+      <strong>Installation Android :</strong> le téléphone peut demander
+      d’autoriser temporairement cette source. Conservez Google Play Protect
+      activé et interrompez l’installation s’il signale l’APK comme dangereux.
+    </p>
+
     <section class="gallery" aria-label="Ambiances du jeu">
       <figure>
         <img
@@ -178,19 +418,69 @@
         <figcaption>Le jour</figcaption>
       </figure>
     </section>
+
     <section class="credits">
       <p>
         <strong>Game designer : Louis-Philippe Marcelino</strong><br>
         <strong>Développeur : Thomas Ricaud</strong>
       </p>
       <p>
-        Projet utilisable et modifiable avec attribution, sous licences
-        MIT et
+        Projet utilisable et modifiable avec attribution, sous licences MIT et
         <a href="https://creativecommons.org/licenses/by/4.0/">
           Creative Commons Attribution 4.0
         </a>.
       </p>
     </section>
   </main>
+
+  <script>
+    (() => {
+      const card = document.querySelector("#security-card");
+      const title = document.querySelector("#security-title");
+      const icon = document.querySelector("#security-icon");
+      const metrics = document.querySelector("#security-metrics");
+      const vulnerabilityCount = document.querySelector("#vulnerability-count");
+      const componentCount = document.querySelector("#component-count");
+      const analysisDate = document.querySelector("#analysis-date");
+      const versionNodes = document.querySelectorAll("[data-security-version]");
+
+      const showUnavailable = () => {
+        card.classList.add("unavailable");
+        title.textContent = "Rapport de sécurité temporairement indisponible";
+        icon.textContent = "!";
+        metrics.hidden = true;
+        analysisDate.textContent = "Les fichiers de vérification restent accessibles ci-dessous.";
+      };
+
+      fetch("security-report.json", { cache: "no-store" })
+        .then((response) => {
+          if (!response.ok) throw new Error("security report unavailable");
+          return response.json();
+        })
+        .then((report) => {
+          const count = Number(report?.result?.known_vulnerability_count);
+          const components = Number(report?.result?.packages_analyzed);
+          const generatedAt = new Date(report?.generated_at);
+          const passed = report?.status === "passed" && count === 0;
+
+          if (!passed || !Number.isFinite(components) || Number.isNaN(generatedAt.getTime())) {
+            throw new Error("invalid security report");
+          }
+
+          vulnerabilityCount.textContent = String(count);
+          componentCount.textContent = String(components);
+          versionNodes.forEach((node) => {
+            node.textContent = report.project_version || "publiée";
+          });
+          const formattedDate = new Intl.DateTimeFormat("fr-FR", {
+            dateStyle: "long",
+            timeStyle: "short",
+            timeZone: "Europe/Paris",
+          }).format(generatedAt);
+          analysisDate.textContent = `Dernière analyse : ${formattedDate}`;
+        })
+        .catch(showUnavailable);
+    })();
+  </script>
 </body>
 </html>

@@ -1,0 +1,127 @@
+name: Refresh public download page
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/pages-refresh.yml"
+      - "distribution/index.html"
+      - "app/src/main/res/drawable-nodpi/app_emblem.webp"
+      - "app/src/main/res/drawable-nodpi/bg_village_day.webp"
+      - "app/src/main/res/drawable-nodpi/bg_village_night.webp"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Publish page with latest verified release
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+      pages: write
+    concurrency:
+      group: github-pages-deployment
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Check out page source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Assemble page from latest immutable release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest_tag=$(gh release view --json tagName --jq .tagName)
+          release_sha=$(
+            gh api "repos/$GITHUB_REPOSITORY/commits/$latest_tag" --jq .sha
+          )
+          codeql_conclusion=$(
+            gh run list \
+              --commit "$release_sha" \
+              --workflow codeql.yml \
+              --limit 10 \
+              --json status,conclusion \
+              --jq 'map(select(.status == "completed")) | .[0].conclusion // ""'
+          )
+          if [[ "$codeql_conclusion" != "success" ]]; then
+            echo "::error::CodeQL did not pass for release commit $release_sha"
+            exit 1
+          fi
+
+          mkdir public-download
+          gh release download "$latest_tag" --dir public-download
+
+          required_assets=(
+            le-retour-de-la-bete.apk
+            le-retour-de-la-bete.apk.sha256
+            le-retour-de-la-bete.apk.cert.sha256
+            le-retour-de-la-bete.cdx.json
+            security-report.md
+            security-report.json
+            osv-results.json
+            osv-results.sarif
+          )
+          for asset in "${required_assets[@]}"; do
+            if [[ ! -s "public-download/$asset" ]]; then
+              echo "::error::Missing release asset: $asset"
+              exit 1
+            fi
+          done
+
+          cd public-download
+          sha256sum --check le-retour-de-la-bete.apk.sha256
+          apk_sha256=$(sha256sum le-retour-de-la-bete.apk | cut -d ' ' -f 1)
+          report_apk_sha256=$(jq -r .apk.sha256 security-report.json)
+          expected_certificate=$(
+            tr -d '[:space:]' < \
+              ../distribution/release-signing-certificate.sha256
+          )
+          published_certificate=$(
+            tr -d '[:space:]' < \
+              le-retour-de-la-bete.apk.cert.sha256
+          )
+
+          if [[ "$apk_sha256" != "$report_apk_sha256" ]]; then
+            echo "::error::Security report does not describe the published APK"
+            exit 1
+          fi
+          if [[ "$published_certificate" != "$expected_certificate" ]]; then
+            echo "::error::Published APK certificate is not the expected certificate"
+            exit 1
+          fi
+          jq -e '
+            .status == "passed" and
+            .result.known_vulnerability_count == 0 and
+            .result.packages_analyzed > 0
+          ' security-report.json
+          sbom_components=$(jq '.components | length' le-retour-de-la-bete.cdx.json)
+          report_components=$(jq '.result.packages_analyzed' security-report.json)
+          if [[ "$sbom_components" != "$report_components" ]]; then
+            echo "::error::Security report and SBOM component counts differ"
+            exit 1
+          fi
+
+          cp ../distribution/index.html index.html
+          cp ../app/src/main/res/drawable-nodpi/app_emblem.webp app_emblem.webp
+          cp ../app/src/main/res/drawable-nodpi/bg_village_night.webp \
+            bg_village_night.webp
+          cp ../app/src/main/res/drawable-nodpi/bg_village_day.webp \
+            bg_village_day.webp
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
+        with:
+          path: public-download
+
+      - name: Deploy public download page
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

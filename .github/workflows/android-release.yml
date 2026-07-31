@@ -279,6 +279,9 @@ jobs:
     name: Publish public download page
     needs: build
     runs-on: ubuntu-latest
+    concurrency:
+      group: github-pages-deployment
+      cancel-in-progress: false
     permissions:
       id-token: write
       pages: write

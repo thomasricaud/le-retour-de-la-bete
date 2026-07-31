@@ -128,3 +128,17 @@ git push origin v0.1.0
 
 Un lancement manuel depuis l’onglet Actions reconstruit et redéploie l’APK,
 mais seule une exécution déclenchée par un tag crée une GitHub Release.
+
+## Actualiser uniquement la page de téléchargement
+
+Une modification de `distribution/index.html` ou de ses trois images déclenche
+`.github/workflows/pages-refresh.yml`. Ce workflow ne construit aucune APK et
+ne crée ni tag ni release. Il télécharge les fichiers inchangés de la dernière
+release publique, vérifie leur empreinte, le certificat, le rapport OSV, le
+SBOM et le résultat CodeQL du commit publié, puis redéploie seulement GitHub
+Pages.
+
+La page lit `security-report.json` dans le navigateur pour afficher la version,
+la date de l’analyse, le nombre de vulnérabilités connues et le nombre de
+composants. Si ce rapport est absent ou invalide, le bandeau passe dans un état
+d’avertissement et ne présente pas les valeurs précédentes comme actuelles.
