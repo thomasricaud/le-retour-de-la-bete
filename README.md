@@ -1,5 +1,8 @@
 # Le Retour de la Bête — conducteur Android
 
+[![Analyse OSV](https://github.com/thomasricaud/le-retour-de-la-bete/actions/workflows/security-report.yml/badge.svg?branch=main)](https://github.com/thomasricaud/le-retour-de-la-bete/actions/workflows/security-report.yml)
+[![CodeQL](https://github.com/thomasricaud/le-retour-de-la-bete/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/thomasricaud/le-retour-de-la-bete/actions/workflows/codeql.yml)
+
 Application Android hors ligne destinée au téléphone qui diffuse le son de la
 partie sur son haut-parleur ou sur une enceinte externe.
 
@@ -116,6 +119,27 @@ La version `release` signée est produite automatiquement par GitHub Actions.
 - APK direct :
   `https://thomasricaud.github.io/le-retour-de-la-bete/le-retour-de-la-bete.apk`
 - Procédure et signature : [`docs/RELEASE.md`](docs/RELEASE.md)
+
+## Sécurité et dépendances
+
+Le dépôt ne contient pas de bibliothèque d’IA embarquée ni de binaire Android
+opaque. Les dépendances d’exécution sont résolues depuis Google Maven et Maven
+Central, puis vérifiées par SHA-256 pendant chaque build.
+
+Chaque release publique fournit l’APK signé, son empreinte SHA-256, l’empreinte
+de son certificat de signature, une nomenclature CycloneDX des composants et
+deux attestations GitHub : provenance du build et association entre l’APK et
+son SBOM. CodeQL, Dependabot et la revue des dépendances complètent ces
+contrôles. OSV-Scanner vérifie également le SBOM à chaque changement, chaque
+semaine et avant publication : une vulnérabilité connue bloque la release. Le
+rapport lisible et les résultats JSON/SARIF sont publics dans chaque release et
+sur la page de téléchargement. Les modalités de signalement privé et les
+limites de ces garanties sont décrites dans [`SECURITY.md`](SECURITY.md).
+
+Le certificat public attendu est conservé dans
+[`distribution/release-signing-certificate.sha256`](distribution/release-signing-certificate.sha256).
+Les builds de release sont interrompus si une autre clé est utilisée, afin que
+les utilisateurs existants puissent toujours installer les mises à jour.
 
 ## Visuels
 

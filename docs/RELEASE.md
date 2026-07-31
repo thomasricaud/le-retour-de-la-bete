@@ -12,9 +12,46 @@ Le workflow :
 3. exécute les tests unitaires et Android Lint ;
 4. construit un APK `release` signé ;
 5. vérifie cryptographiquement la signature ;
-6. publie l’APK comme artifact GitHub Actions ;
-7. crée une GitHub Release pour le tag ;
-8. déploie une page GitHub Pages avec un lien APK stable.
+6. produit une nomenclature CycloneDX des dépendances d’exécution ;
+7. analyse le SBOM avec OSV-Scanner et bloque la publication en cas de
+   vulnérabilité connue ou d’analyse incomplète ;
+8. génère un rapport public lisible ainsi que les résultats JSON/SARIF ;
+9. génère des attestations cryptographiques de provenance et de SBOM ;
+10. publie l’APK, son empreinte, l’empreinte du certificat, son SBOM et les
+    rapports de sécurité comme artifact GitHub Actions ;
+11. crée une GitHub Release immuable pour le tag ;
+12. déploie une page GitHub Pages avec un lien APK stable.
+
+## Contrôles de chaîne d’approvisionnement
+
+- Le wrapper Gradle vérifie le SHA-256 officiel de la distribution Gradle.
+- `gradle/verification-metadata.xml` vérifie les SHA-256 des plugins et
+  dépendances, y compris les dépendances transitives.
+- Toutes les actions GitHub sont référencées par leur SHA de commit complet.
+- CodeQL analyse le code Kotlin/Java à chaque changement de `main`, pull request
+  et exécution hebdomadaire.
+- Dependabot et la revue des dépendances signalent ou refusent les versions
+  affectées par une vulnérabilité connue.
+- `.github/workflows/security-report.yml` analyse le SBOM avec OSV-Scanner à
+  chaque changement de `main`, sur les pull requests et chaque semaine. Il
+  publie un artifact lisible et envoie le résultat SARIF dans GitHub Security.
+- Le workflow de release refait la même analyse sur le SBOM exact de l’APK et
+  publie `security-report.md`, `security-report.json`, `osv-results.json` et
+  `osv-results.sarif` avec la release et sur GitHub Pages.
+- La release est d’abord assemblée en brouillon avec tous ses fichiers, puis
+  publiée. Une exécution ultérieure ne remplace jamais un fichier publié : elle
+  vérifie que les octets sont identiques ou échoue.
+- L’empreinte du certificat doit correspondre exactement à
+  `distribution/release-signing-certificate.sha256`. Une autre clé fait échouer
+  le build avant publication afin de préserver les mises à jour des
+  installations existantes.
+
+Après téléchargement, vérifier la provenance de l’APK avec :
+
+```powershell
+gh attestation verify .\le-retour-de-la-bete.apk `
+  --repo thomasricaud/le-retour-de-la-bete
+```
 
 Adresse de téléchargement prévue :
 

@@ -55,6 +55,17 @@
       text-decoration: none;
     }
     a.checksum { color: #d7c7a6; }
+    .security {
+      margin-top: 30px;
+      padding: 22px;
+      text-align: left;
+      border: 1px solid #3f6672;
+      border-radius: 18px;
+      background: #0d2230;
+    }
+    .security h2 { margin-top: 0; color: #f4e9d3; }
+    .security a { color: #9ed6e5; }
+    .security li { margin: 10px 0; line-height: 1.45; }
     .gallery {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -106,9 +117,51 @@
       Vérifier l’empreinte SHA-256
     </a>
     <small>
-      Android peut demander d’autoriser temporairement l’installation
-      d’applications provenant du navigateur.
+      Android peut demander d’autoriser temporairement l’installation depuis
+      la source choisie. Conservez toujours Google Play Protect activé.
     </small>
+    <section class="security" aria-labelledby="security-title">
+      <h2 id="security-title">Sécurité et vérification</h2>
+      <p>
+        L’application est construite publiquement à partir de son code source.
+        Ne poursuivez pas l’installation si Play Protect signale l’APK comme
+        dangereux.
+      </p>
+      <ul>
+        <li>
+          <a href="https://github.com/thomasricaud/le-retour-de-la-bete">
+            Consulter le code source et les dépendances
+          </a>
+        </li>
+        <li>
+          <a href="le-retour-de-la-bete.cdx.json">
+            Télécharger la nomenclature logicielle CycloneDX (SBOM)
+          </a>
+        </li>
+        <li>
+          <a href="security-report.md">
+            Lire le dernier rapport public de sécurité OSV
+          </a>
+          (<a href="security-report.json">JSON</a>,
+          <a href="osv-results.json">résultats complets</a>)
+        </li>
+        <li>
+          <a href="le-retour-de-la-bete.apk.sha256">
+            Comparer l’empreinte SHA-256 de l’APK
+          </a>
+        </li>
+        <li>
+          <a href="le-retour-de-la-bete.apk.cert.sha256">
+            Comparer l’empreinte du certificat de signature
+          </a>
+        </li>
+        <li>
+          <a href="https://github.com/thomasricaud/le-retour-de-la-bete/actions">
+            Vérifier les tests, l’analyse de sécurité et la provenance du build
+          </a>
+        </li>
+      </ul>
+    </section>
     <section class="gallery" aria-label="Ambiances du jeu">
       <figure>
         <img

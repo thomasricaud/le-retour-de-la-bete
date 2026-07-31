@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("org.cyclonedx.bom")
 }
 
 val releaseKeystorePath = providers.environmentVariable("ANDROID_KEYSTORE_PATH").orNull
@@ -9,8 +10,8 @@ val releaseKeystorePassword =
     providers.environmentVariable("ANDROID_KEYSTORE_PASSWORD").orNull
 val releaseKeyAlias = providers.environmentVariable("ANDROID_KEY_ALIAS").orNull
 val releaseKeyPassword = providers.environmentVariable("ANDROID_KEY_PASSWORD").orNull
-val appVersionCode = providers.gradleProperty("appVersionCode").map(String::toInt).orElse(4005)
-val appVersionName = providers.gradleProperty("appVersionName").orElse("0.4.5")
+val appVersionCode = providers.gradleProperty("appVersionCode").map(String::toInt).orElse(4006)
+val appVersionName = providers.gradleProperty("appVersionName").orElse("0.4.6")
 
 android {
     namespace = "fr.leretourdelabete"
@@ -87,4 +88,13 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
+}
+
+tasks.cyclonedxDirectBom {
+    includeConfigs = listOf("releaseRuntimeClasspath")
+    projectType.set(org.cyclonedx.model.Component.Type.APPLICATION)
+    componentName = "le-retour-de-la-bete"
+    componentVersion = appVersionName.get()
+    includeBomSerialNumber = true
+    includeLicenseText = false
 }

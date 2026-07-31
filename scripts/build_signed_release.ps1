@@ -73,9 +73,28 @@ try {
         $apksigner = Join-Path `
             "C:\Users\Thomas\AppData\Local\Android\Sdk" `
             "build-tools\35.0.0\apksigner.bat"
-        & $apksigner verify --verbose $apkPath
-        if ($LASTEXITCODE -ne 0) {
+        $signatureOutput = & $apksigner verify --verbose --print-certs $apkPath
+        $signatureExitCode = $LASTEXITCODE
+        $signatureOutput
+        if ($signatureExitCode -ne 0) {
             throw "La vérification de signature de l'APK a échoué."
+        }
+
+        $expectedFingerprintPath = Join-Path $projectRoot `
+            "distribution\release-signing-certificate.sha256"
+        $expectedFingerprint =
+            (Get-Content -Raw -LiteralPath $expectedFingerprintPath).Trim()
+        $certificateMatch = $signatureOutput | Select-String -Pattern `
+            '^Signer #1 certificate SHA-256 digest: ([0-9a-f]{64})$'
+        if (-not $certificateMatch) {
+            throw "Empreinte du certificat de signature introuvable."
+        }
+        $actualFingerprint = $certificateMatch.Matches[0].Groups[1].Value
+        if ($actualFingerprint -ne $expectedFingerprint) {
+            throw (
+                "Le certificat de signature ne correspond pas aux versions " +
+                "déjà installées. Publication interdite."
+            )
         }
         Get-Item -LiteralPath $apkPath
     } finally {

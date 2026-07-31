@@ -7,9 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: read
 
 concurrency:
   group: android-release
@@ -19,20 +17,26 @@ jobs:
   build:
     name: Test, sign and package APK
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      attestations: write
+      contents: read
+      id-token: write
+      security-events: write
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
           distribution: temurin
           java-version: "17"
           cache: gradle
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
 
       - name: Restore Android signing key
         shell: bash
@@ -78,6 +82,7 @@ jobs:
           fi
           chmod +x gradlew
           ./gradlew testDebugUnitTest lintDebug assembleRelease \
+            :app:cyclonedxDirectBom \
             "${version_args[@]}" --no-daemon
 
       - name: Verify APK signature
@@ -86,11 +91,14 @@ jobs:
             app/build/outputs/apk/release/app-release.apk
 
       - name: Prepare downloadable files
+        id: release_metadata
         shell: bash
         run: |
           mkdir -p public-download
           cp app/build/outputs/apk/release/app-release.apk \
             public-download/le-retour-de-la-bete.apk
+          cp app/build/reports/cyclonedx-direct/bom.json \
+            public-download/le-retour-de-la-bete.cdx.json
           cp distribution/index.html public-download/index.html
           cp app/src/main/res/drawable-nodpi/app_emblem.webp \
             public-download/app_emblem.webp
@@ -98,46 +106,182 @@ jobs:
             public-download/bg_village_night.webp
           cp app/src/main/res/drawable-nodpi/bg_village_day.webp \
             public-download/bg_village_day.webp
+          cert_fingerprint=$(
+            "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify \
+              --print-certs public-download/le-retour-de-la-bete.apk |
+              sed -n 's/^Signer #1 certificate SHA-256 digest: //p'
+          )
+          if [[ ! "$cert_fingerprint" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "::error::Unable to read the APK signing certificate fingerprint"
+            exit 1
+          fi
+          expected_fingerprint=$(
+            tr -d '[:space:]' < \
+              distribution/release-signing-certificate.sha256
+          )
+          if [[ "$cert_fingerprint" != "$expected_fingerprint" ]]; then
+            echo "::error::APK signing certificate differs from installed releases"
+            exit 1
+          fi
+          printf '%s\n' "$cert_fingerprint" > \
+            public-download/le-retour-de-la-bete.apk.cert.sha256
           cd public-download
           sha256sum le-retour-de-la-bete.apk > le-retour-de-la-bete.apk.sha256
+          apk_sha256=$(cut -d ' ' -f 1 le-retour-de-la-bete.apk.sha256)
+          version_name=$(
+            "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging \
+              le-retour-de-la-bete.apk |
+              sed -n "s/.*versionName='\([^']*\)'.*/\1/p"
+          )
+          if [[ -z "$version_name" ]]; then
+            echo "::error::Unable to read the APK version"
+            exit 1
+          fi
+          printf 'apk_sha256=%s\n' "$apk_sha256" >> "$GITHUB_OUTPUT"
+          printf 'certificate_sha256=%s\n' "$cert_fingerprint" >> "$GITHUB_OUTPUT"
+          printf 'version_name=%s\n' "$version_name" >> "$GITHUB_OUTPUT"
+
+      - name: Validate SBOM
+        run: |
+          jq -e '
+            .bomFormat == "CycloneDX" and
+            .specVersion == "1.6" and
+            (.components | length > 0)
+          ' public-download/le-retour-de-la-bete.cdx.json
+
+      - name: Scan SBOM with OSV and create public reports
+        id: osv
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          ./scripts/run_osv_security_report.ps1 `
+            -SbomPath public-download/le-retour-de-la-bete.cdx.json `
+            -OutputDirectory public-download `
+            -ProjectVersion '${{ steps.release_metadata.outputs.version_name }}' `
+            -CommitSha '${{ github.sha }}' `
+            -ApkSha256 '${{ steps.release_metadata.outputs.apk_sha256 }}' `
+            -CertificateSha256 '${{ steps.release_metadata.outputs.certificate_sha256 }}'
+
+      - name: Upload OSV results to GitHub Security
+        if: always() && hashFiles('public-download/osv-results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@a2983b8bed1923f44751c5c43237f479442827b3 # v3
+        with:
+          sarif_file: public-download/osv-results.sarif
+          category: osv-release-runtime-dependencies
+
+      - name: Enforce OSV result
+        if: steps.osv.outcome == 'failure'
+        run: |
+          echo "::error::Known vulnerability detected or OSV analysis failed"
+          exit 1
+
+      - name: Attest APK build provenance
+        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4
+        with:
+          subject-path: public-download/le-retour-de-la-bete.apk
+
+      - name: Attest APK SBOM
+        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4
+        with:
+          subject-path: public-download/le-retour-de-la-bete.apk
+          sbom-path: public-download/le-retour-de-la-bete.cdx.json
 
       - name: Upload workflow artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: le-retour-de-la-bete-apk
           path: |
             public-download/le-retour-de-la-bete.apk
             public-download/le-retour-de-la-bete.apk.sha256
+            public-download/le-retour-de-la-bete.apk.cert.sha256
+            public-download/le-retour-de-la-bete.cdx.json
+            public-download/security-report.md
+            public-download/security-report.json
+            public-download/osv-results.json
+            public-download/osv-results.sarif
           if-no-files-found: error
 
       - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:
           path: public-download
 
-      - name: Create GitHub Release
-        if: github.ref_type == 'tag'
+  release:
+    name: Publish immutable release assets
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out release notes
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Download verified build artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: le-retour-de-la-bete-apk
+          path: public-download
+
+      - name: Create or verify GitHub Release
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" \
-              public-download/le-retour-de-la-bete.apk \
-              public-download/le-retour-de-la-bete.apk.sha256 \
-              --clobber
+          assets=(
+            le-retour-de-la-bete.apk
+            le-retour-de-la-bete.apk.sha256
+            le-retour-de-la-bete.apk.cert.sha256
+            le-retour-de-la-bete.cdx.json
+            security-report.md
+            security-report.json
+            osv-results.json
+            osv-results.sarif
+          )
+
+          if release_state=$(gh release view "$GITHUB_REF_NAME" --json isDraft --jq .isDraft 2>/dev/null); then
+            if [[ "$release_state" == "true" ]]; then
+              gh release upload "$GITHUB_REF_NAME" \
+                "${assets[@]/#/public-download/}" --clobber
+              gh release edit "$GITHUB_REF_NAME" --draft=false
+            else
+              mkdir released-assets
+              gh release download "$GITHUB_REF_NAME" \
+                --dir released-assets
+              for asset in "${assets[@]}"; do
+                cmp --silent \
+                  "public-download/$asset" \
+                  "released-assets/$asset" || {
+                    echo "::error::Published asset differs: $asset"
+                    exit 1
+                  }
+              done
+              echo "Published immutable assets already match this build."
+            fi
           else
+            release_notes_args=(--generate-notes)
+            notes_file="docs/releases/${GITHUB_REF_NAME}.md"
+            if [[ -f "$notes_file" ]]; then
+              release_notes_args=(--notes-file "$notes_file")
+            fi
             gh release create "$GITHUB_REF_NAME" \
-              public-download/le-retour-de-la-bete.apk \
-              public-download/le-retour-de-la-bete.apk.sha256 \
+              --draft \
               --verify-tag \
-              --generate-notes \
+              "${release_notes_args[@]}" \
               --title "Le Retour de la Bête ${GITHUB_REF_NAME}"
+            gh release upload "$GITHUB_REF_NAME" \
+              "${assets[@]/#/public-download/}"
+            gh release edit "$GITHUB_REF_NAME" --draft=false
           fi
 
   deploy:
     name: Publish public download page
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      pages: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -145,4 +289,4 @@ jobs:
     steps:
       - name: Deploy APK download page
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
