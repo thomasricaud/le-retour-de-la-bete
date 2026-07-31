@@ -31,7 +31,9 @@ Le workflow :
 - CodeQL analyse le code Kotlin/Java à chaque changement de `main`, pull request
   et exécution hebdomadaire.
 - Dependabot et la revue des dépendances signalent ou refusent les versions
-  affectées par une vulnérabilité connue.
+  affectées par une vulnérabilité connue. Le graphe soumis à GitHub est limité
+  à `:app:releaseRuntimeClasspath`, c’est-à-dire aux composants destinés à
+  l’APK public, et non aux outils utilisés seulement pour construire le projet.
 - `.github/workflows/security-report.yml` analyse le SBOM avec OSV-Scanner à
   chaque changement de `main`, sur les pull requests et chaque semaine. Il
   publie un artifact lisible et envoie le résultat SARIF dans GitHub Security.
