@@ -2,6 +2,7 @@ package fr.leretourdelabete.data
 
 import android.content.Context
 import fr.leretourdelabete.domain.PackCallRule
+import fr.leretourdelabete.model.AiVoice
 import fr.leretourdelabete.model.DayStage
 import fr.leretourdelabete.model.DrawMode
 import fr.leretourdelabete.model.EndReason
@@ -22,6 +23,8 @@ class GameSessionRepository(context: Context) {
             .putInt(KEY_PLAYERS, session.playerCount)
             .putInt(KEY_PACK_CALL_VILLAGER_LIMIT, session.packCallVillagerLimit)
             .putInt(KEY_DAY_MINUTES, session.dayDurationMinutes)
+            .putBoolean(KEY_DAY_AMBIENCE, session.dayAmbienceEnabled)
+            .putString(KEY_AI_VOICE, session.aiVoice.name)
             .putInt(KEY_ROUND, session.round)
             .putString(KEY_CURRENT_COLOR, session.currentNightColor?.name)
             .putString(KEY_NEXT_COLOR, session.nextNightColor?.name)
@@ -63,6 +66,11 @@ class GameSessionRepository(context: Context) {
             packCallVillagerLimit = packCallVillagerLimit,
             dayDurationMinutes = preferences.getInt(KEY_DAY_MINUTES, 5)
                 .coerceIn(0, 30),
+            dayAmbienceEnabled = preferences.getBoolean(KEY_DAY_AMBIENCE, false),
+            aiVoice = enumValueOrDefault(
+                preferences.getString(KEY_AI_VOICE, null),
+                AiVoice.MALE,
+            ),
             round = preferences.getInt(KEY_ROUND, 1).coerceAtLeast(1),
             currentNightColor = enumValueOrNull<NightColor>(
                 preferences.getString(KEY_CURRENT_COLOR, null),
@@ -89,9 +97,7 @@ class GameSessionRepository(context: Context) {
         ).let { loaded ->
             if (
                 loaded.screen == GameScreen.NIGHT &&
-                loaded.round == 1 &&
-                loaded.mode == GameMode.CONFIRMED &&
-                loaded.cueIndex > 0
+                loaded.mode == GameMode.BEGINNER
             ) {
                 loaded.copy(cueIndex = 0, cueRemainingMillis = 0L)
             } else {
@@ -131,6 +137,8 @@ class GameSessionRepository(context: Context) {
         const val KEY_PLAYERS = "players"
         const val KEY_PACK_CALL_VILLAGER_LIMIT = "pack_call_villager_limit"
         const val KEY_DAY_MINUTES = "day_minutes"
+        const val KEY_DAY_AMBIENCE = "day_ambience"
+        const val KEY_AI_VOICE = "ai_voice"
         const val KEY_ROUND = "round"
         const val KEY_CURRENT_COLOR = "current_color"
         const val KEY_NEXT_COLOR = "next_color"

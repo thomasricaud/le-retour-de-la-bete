@@ -53,6 +53,7 @@ enum class ActionTone {
     DANGER,
     YELLOW,
     GREEN,
+    CALL,
 }
 
 @Composable
@@ -141,14 +142,24 @@ fun LargeActionButton(
         ActionTone.DANGER -> Color(0xFF6F1922)
         ActionTone.YELLOW -> MoonYellow
         ActionTone.GREEN -> GhoulGreen
+        ActionTone.CALL -> Color.Black
     }
     val contentColor = if (tone == ActionTone.YELLOW) NightInk else Color.White
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.heightIn(min = 58.dp),
-        shape = RoundedCornerShape(15.dp),
-        contentPadding = PaddingValues(horizontal = 22.dp, vertical = 14.dp),
+        modifier = modifier.heightIn(min = if (tone == ActionTone.CALL) 76.dp else 58.dp),
+        shape = RoundedCornerShape(if (tone == ActionTone.CALL) 18.dp else 15.dp),
+        border = if (tone == ActionTone.CALL) {
+            androidx.compose.foundation.BorderStroke(3.dp, BloodRedBright)
+        } else {
+            null
+        },
+        contentPadding = if (tone == ActionTone.CALL) {
+            PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+        } else {
+            PaddingValues(horizontal = 22.dp, vertical = 14.dp)
+        },
         colors = ButtonDefaults.buttonColors(
             containerColor = container,
             contentColor = contentColor,
@@ -160,7 +171,7 @@ fun LargeActionButton(
             Image(
                 painter = painterResource(iconRes),
                 contentDescription = label,
-                modifier = Modifier.size(28.dp),
+                modifier = Modifier.size(if (tone == ActionTone.CALL) 64.dp else 28.dp),
                 colorFilter = if (iconRes == R.drawable.ic_bluetooth) {
                     ColorFilter.tint(contentColor)
                 } else {
@@ -174,7 +185,6 @@ fun LargeActionButton(
                 text = label,
                 style = MaterialTheme.typography.labelLarge,
                 textAlign = TextAlign.Center,
-                modifier = if (showLabelWithIcon) Modifier else Modifier.fillMaxWidth(),
             )
         }
     }

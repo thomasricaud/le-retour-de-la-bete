@@ -48,22 +48,22 @@ rédaction de ce document.
   `MediaPlayer` est utilisée.
 - Si une voix de séquence manque, le moteur conserve le texte à l'écran et limite
   l'attente silencieuse à cinq secondes.
-- `commun_012_ambiance_nuit_boucle` tourne sur le lecteur d'ambiance pendant tout
-  l'écran Nuit, du premier texte au réveil du village.
-- Le temps pour rejoindre les habitations est toujours de 45 secondes. Hors
-  première nuit confirmée, la boucle `commun_012_ambiance_nuit_boucle` accompagne
-  cette minuterie.
-- La première nuit confirmée est une piste continue de 152 secondes. Les quatre
+- Les deux niveaux de guidage utilisent temporairement le même conducteur audio
+  confirmé. Les anciennes pistes débutant restent présentes pour une réutilisation
+  future, mais ne sont plus jouées pendant une partie.
+- La première nuit est une piste continue de 152 secondes. Les quatre
   pistes `*_avance_*` remplacent la lecture en cours lorsque le joueur avance vers
   un seuil précis.
-- La minuterie du conseil reste exactement de 115 secondes.
-- `commun_013_ambiance_jour_boucle` remplace automatiquement la boucle de nuit à
-  l'entrée dans le Jour et continue pendant le tirage de la prochaine nuit.
+- Les nuits suivantes utilisent la piste continue de 258 secondes et ses extraits
+  dédiés aux actions « Avancer ».
+- `commun_013_ambiance_jour_boucle` est désactivé par défaut. Si l'option
+  « Ambiance sonore le jour » est cochée, il accompagne le Jour puis le tirage de
+  la prochaine nuit.
 - Les voix et effets utilisent un second `MediaPlayer` : ils ne coupent donc pas
   l'ambiance de phase et sont mixés par-dessus à plein volume. L'ambiance est
   atténuée à 28 %.
-- `aides_410_deroulement_nuit` est utilisé avec deux durées de repli : 55 secondes dans
-  l'introduction débutant et 60 secondes dans l'écran d'aide. Un seul MP3 est requis.
+- Les sons de fin `aides_440`, `aides_442` et `aides_443` sont lus uniquement à la
+  demande via l'action « Écouter la fin ».
 
 ## Recommandations d'enregistrement
 

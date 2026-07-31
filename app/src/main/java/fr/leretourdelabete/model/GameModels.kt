@@ -10,6 +10,11 @@ enum class DrawMode {
     PHYSICAL_CARDS,
 }
 
+enum class AiVoice {
+    MALE,
+    FEMALE,
+}
+
 enum class NightColor {
     YELLOW,
     GREEN,
@@ -53,6 +58,8 @@ data class SetupOptions(
     val mode: GameMode = GameMode.BEGINNER,
     val drawMode: DrawMode = DrawMode.APPLICATION,
     val dayDurationMinutes: Int = 5,
+    val dayAmbienceEnabled: Boolean = false,
+    val aiVoice: AiVoice = AiVoice.MALE,
 )
 
 data class GameSession(
@@ -62,6 +69,8 @@ data class GameSession(
     val playerCount: Int = 6,
     val packCallVillagerLimit: Int = 2,
     val dayDurationMinutes: Int = 5,
+    val dayAmbienceEnabled: Boolean = false,
+    val aiVoice: AiVoice = AiVoice.MALE,
     val round: Int = 1,
     val currentNightColor: NightColor? = null,
     val nextNightColor: NightColor? = null,

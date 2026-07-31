@@ -57,7 +57,7 @@ class GameSequenceFactoryTest {
     }
 
     @Test
-    fun `beginner mode gives more spoken guidance than confirmed mode`() {
+    fun `beginner and confirmed modes use the same later night conductor`() {
         val beginner = GameSequenceFactory.night(
             round = 3,
             color = NightColor.GREEN,
@@ -71,23 +71,21 @@ class GameSequenceFactoryTest {
             packCallVillagerLimit = 2,
         )
 
-        assertTrue(beginner.size > confirmed.size)
-        assertTrue(beginner.any { it.id == "council_identify" })
-        assertFalse(confirmed.any { it.id == "council_identify" })
+        assertEquals(confirmed, beginner)
+        assertEquals(listOf(ConfirmedLaterNightTimeline.CUE_ID), beginner.map { it.id })
     }
 
     @Test
-    fun `confirmed introduction omits the ready announcement`() {
+    fun `beginner and confirmed introductions only use the synopsis`() {
         val beginner = GameSequenceFactory.intro(GameMode.BEGINNER)
         val confirmed = GameSequenceFactory.intro(GameMode.CONFIRMED)
 
-        assertTrue(beginner.any { it.id == "intro_ready" })
-        assertFalse(confirmed.any { it.id == "intro_ready" })
+        assertEquals(confirmed, beginner)
         assertEquals(listOf("intro_synopsis"), confirmed.map { it.id })
     }
 
     @Test
-    fun `beginner departure remains 45 seconds`() {
+    fun `beginner mode uses the confirmed continuous night timelines`() {
         val beginnerFirstNight = GameSequenceFactory.night(
             round = 1,
             color = null,
@@ -101,12 +99,10 @@ class GameSequenceFactoryTest {
             packCallVillagerLimit = 2,
         )
 
-        listOf(beginnerFirstNight, beginnerLaterNight).forEach { cues ->
-            val departure = cues.first { it.id == "night_departure_timer" }
-            assertEquals(45_000L, departure.fallbackDurationMillis)
-            assertEquals("commun_012_ambiance_nuit_boucle", departure.audioResource)
-            assertTrue("45 secondes" in departure.text)
-        }
+        assertEquals(ConfirmedFirstNightTimeline.CUE_ID, beginnerFirstNight.single().id)
+        assertEquals(152_000L, beginnerFirstNight.single().fallbackDurationMillis)
+        assertEquals(ConfirmedLaterNightTimeline.CUE_ID, beginnerLaterNight.single().id)
+        assertEquals(258_000L, beginnerLaterNight.single().fallbackDurationMillis)
     }
 
     @Test
@@ -323,18 +319,21 @@ class GameSequenceFactoryTest {
     }
 
     @Test
-    fun `first council screen remains available in beginner mode`() {
-        val cue = GameSequenceFactory.night(
+    fun `beginner first night matches confirmed first night`() {
+        val beginner = GameSequenceFactory.night(
             round = 1,
             color = null,
             mode = GameMode.BEGINNER,
             packCallVillagerLimit = 2,
-        ).first { it.id == "night_council_timer" }
+        )
+        val confirmed = GameSequenceFactory.night(
+            round = 1,
+            color = null,
+            mode = GameMode.CONFIRMED,
+            packCallVillagerLimit = 2,
+        )
 
-        assertEquals("Première nuit", cue.title)
-        assertEquals("commun_012_ambiance_nuit_boucle", cue.audioResource)
-        assertTrue(cue.loopAudio)
-        assertTrue(cue.replayable)
+        assertEquals(confirmed, beginner)
     }
 
     @Test
@@ -363,21 +362,6 @@ class GameSequenceFactoryTest {
         assertTrue(cue.replayable)
     }
 
-    @Test
-    fun `beginner first council keeps ambience and replay`() {
-        val cue = GameSequenceFactory.night(
-            round = 1,
-            color = null,
-            mode = GameMode.BEGINNER,
-            packCallVillagerLimit = 2,
-        ).first { it.id == "night_council_timer" }
-
-        assertEquals("Première nuit", cue.title)
-        assertEquals("commun_012_ambiance_nuit_boucle", cue.audioResource)
-        assertTrue(cue.loopAudio)
-        assertTrue(cue.replayable)
-    }
-
     @Test(expected = IllegalArgumentException::class)
     fun `later night requires a color`() {
         GameSequenceFactory.night(
@@ -389,20 +373,14 @@ class GameSequenceFactoryTest {
     }
 
     @Test
-    fun `beginner pack call cue uses the configured player threshold`() {
-        val cues = GameSequenceFactory.night(
-            round = 2,
+    fun `confirmed presentation uses the configured player threshold in both modes`() {
+        val presentation = ConfirmedLaterNightTimeline.presentation(
+            remainingMillis = 170_000L,
             color = NightColor.YELLOW,
-            mode = GameMode.BEGINNER,
             packCallVillagerLimit = 3,
         )
 
-        val packCallCue = cues.first { it.id == "council_end_option" }
-        assertTrue("3 villageois ou moins" in packCallCue.text)
-        assertEquals(
-            "debutant_111_option_fin_partie_seuil_3",
-            packCallCue.audioResource,
-        )
+        assertTrue("3 villageois ou moins" in presentation.text)
     }
 
     @Test
@@ -417,5 +395,13 @@ class GameSequenceFactoryTest {
         assertEquals("aides_442_fin_b1_seuil_4", successCue.audioResource)
         assertTrue("Plus de 4 villageois" in failureCue.text)
         assertEquals("aides_443_fin_b2_seuil_4", failureCue.audioResource)
+    }
+
+    @Test
+    fun `blood wolf ending says killed instead of shot down`() {
+        val cue = GameSequenceFactory.endCue("blood_wolf_found", 2)
+
+        assertTrue("a été tué" in cue.text)
+        assertFalse("abattu" in cue.text)
     }
 }

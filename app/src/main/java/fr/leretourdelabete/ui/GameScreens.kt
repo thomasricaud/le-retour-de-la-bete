@@ -49,7 +49,6 @@ import fr.leretourdelabete.domain.HealingEffectRules
 import fr.leretourdelabete.model.DayStage
 import fr.leretourdelabete.model.DrawMode
 import fr.leretourdelabete.model.EndReason
-import fr.leretourdelabete.model.GameMode
 import fr.leretourdelabete.model.GameScreen
 import fr.leretourdelabete.model.HealingOutcome
 import fr.leretourdelabete.model.NightColor
@@ -113,7 +112,7 @@ fun SequenceScreen(
                         LargeActionButton(
                             label = "APPEL",
                             onClick = { showPackConfirmation = true },
-                            tone = ActionTone.DANGER,
+                            tone = ActionTone.CALL,
                             iconRes = R.drawable.app_emblem,
                             showLabelWithIcon = true,
                         )
@@ -638,13 +637,6 @@ private fun CouncilStage(
         )
         Spacer(Modifier.height(20.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (state.session.mode == GameMode.BEGINNER) {
-                LargeActionButton(
-                    "ÉCOUTER L'ANNONCE",
-                    { viewModel.playHelp(GameSequenceFactory.dayCue("council")) },
-                    tone = ActionTone.SECONDARY,
-                )
-            }
             LargeActionButton(
                 "PROCÉDER À LA GUÉRISON",
                 viewModel::advanceDayStage,
@@ -686,14 +678,6 @@ private fun HealingStage(
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.fillMaxWidth(0.82f),
                 )
-                if (state.session.mode == GameMode.BEGINNER) {
-                    Spacer(Modifier.height(20.dp))
-                    LargeActionButton(
-                        "ÉCOUTER L'ANNONCE",
-                        { viewModel.playHelp(GameSequenceFactory.dayCue("healing")) },
-                        tone = ActionTone.SECONDARY,
-                    )
-                }
             }
         }
 
@@ -950,7 +934,7 @@ fun EndScreen(
     val cue = when (reason) {
         EndReason.BLOOD_WOLF_FOUND -> {
             title = "La Bête est vaincue"
-            text = "Le loup-garou de sang s'est révélé lors de la guérison et a été abattu. " +
+            text = "Le loup-garou de sang s'est révélé lors de la guérison et a été tué. " +
                 "Les villageois gagnent et tentent maintenant de guérir les loups-garous et " +
                 "les goules. En cas d'échec de la guérison, c'est l'asile psychiatrique pour " +
                 "ces pauvres âmes."
@@ -1011,7 +995,7 @@ fun EndScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         if (cue != null) {
                             LargeActionButton(
-                                "RÉÉCOUTER LA FIN",
+                                "ÉCOUTER LA FIN",
                                 { viewModel.playHelp(cue) },
                                 tone = ActionTone.SECONDARY,
                             )

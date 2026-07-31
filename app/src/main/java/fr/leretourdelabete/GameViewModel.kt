@@ -28,7 +28,6 @@ import fr.leretourdelabete.domain.PackCallRule
 import fr.leretourdelabete.model.DayStage
 import fr.leretourdelabete.model.DrawMode
 import fr.leretourdelabete.model.EndReason
-import fr.leretourdelabete.model.GameMode
 import fr.leretourdelabete.model.GameScreen
 import fr.leretourdelabete.model.GameSession
 import fr.leretourdelabete.model.HealingOutcome
@@ -154,6 +153,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             playerCount = setup.playerCount,
             packCallVillagerLimit = PackCallRule.maxRemainingVillagers(setup.playerCount),
             dayDurationMinutes = setup.dayDurationMinutes,
+            dayAmbienceEnabled = setup.dayAmbienceEnabled,
+            aiVoice = setup.aiVoice,
             round = 1,
             currentNightColor = null,
             remainingNightDeck = NightDeck.shuffled(),
@@ -178,6 +179,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 mode = saved.mode,
                 drawMode = saved.drawMode,
                 dayDurationMinutes = saved.dayDurationMinutes,
+                dayAmbienceEnabled = saved.dayAmbienceEnabled,
+                aiVoice = saved.aiVoice,
             ),
             hasSavedGame = true,
             statusMessage = if (saved.screen == GameScreen.NIGHT_READY) {
@@ -352,13 +355,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             session = session,
             dayTimerPlaying = false,
         )
-        if (current.mode == GameMode.BEGINNER) {
-            playStandalone(
-                GameSequenceFactory.dayCue(
-                    if (next == DayStage.COUNCIL) "council" else "healing",
-                ),
-            )
-        }
     }
 
     fun showHealingEffect(outcome: HealingOutcome) {
@@ -489,22 +485,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             hasSavedGame = false,
             statusMessage = null,
         )
-        val cue = when (reason) {
-            EndReason.BLOOD_WOLF_FOUND -> GameSequenceFactory.endCue(
-                "blood_wolf_found",
-                session.packCallVillagerLimit,
-            )
-            EndReason.PACK_CALL_SUCCESS -> GameSequenceFactory.endCue(
-                "pack_success",
-                session.packCallVillagerLimit,
-            )
-            EndReason.PACK_CALL_FAILURE -> GameSequenceFactory.endCue(
-                "pack_failure",
-                session.packCallVillagerLimit,
-            )
-            EndReason.ABANDONED -> null
-        }
-        cue?.let(::playStandalone)
     }
 
     fun openHelp() {
@@ -863,7 +843,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             statusMessage = null,
         )
         startPhaseAmbience()
-        playStandalone(GameSequenceFactory.dayCue("discussion"))
     }
 
     private fun startDayTimer() {
@@ -963,7 +942,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             GameScreen.NIGHT -> NIGHT_AMBIENCE_RESOURCE
             GameScreen.DAY,
             GameScreen.DRAW,
-            -> DAY_AMBIENCE_RESOURCE
+            -> DAY_AMBIENCE_RESOURCE.takeIf {
+                _uiState.value.session.dayAmbienceEnabled
+            }
             else -> null
         }
         if (resourceName == null) {

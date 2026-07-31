@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -42,6 +43,7 @@ import fr.leretourdelabete.BuildConfig
 import fr.leretourdelabete.R
 import fr.leretourdelabete.domain.GameSequenceFactory
 import fr.leretourdelabete.domain.PackCallRule
+import fr.leretourdelabete.model.AiVoice
 import fr.leretourdelabete.model.DrawMode
 import fr.leretourdelabete.model.GameMode
 import fr.leretourdelabete.model.GameScreen
@@ -452,6 +454,37 @@ private fun SetupScreen(
                                     Modifier.weight(1f),
                                 )
                             }
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            Checkbox(
+                                checked = setup.dayAmbienceEnabled,
+                                onCheckedChange = { enabled ->
+                                    onUpdate { it.copy(dayAmbienceEnabled = enabled) }
+                                },
+                            )
+                            Text(
+                                "Ambiance sonore le jour",
+                                color = Parchment,
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+                        }
+                        OptionLabel("Voix IA")
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ToggleChoice(
+                                "HOMME",
+                                setup.aiVoice == AiVoice.MALE,
+                                { onUpdate { it.copy(aiVoice = AiVoice.MALE) } },
+                                Modifier.weight(1f),
+                            )
+                            ToggleChoice(
+                                "FEMME",
+                                setup.aiVoice == AiVoice.FEMALE,
+                                { onUpdate { it.copy(aiVoice = AiVoice.FEMALE) } },
+                                Modifier.weight(1f),
+                            )
                         }
                     }
                 }

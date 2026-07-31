@@ -242,8 +242,8 @@ object ConfirmedLaterNightTimeline {
 }
 
 object GameSequenceFactory {
-    fun intro(mode: GameMode): List<GameCue> = buildList {
-        add(
+    @Suppress("UNUSED_PARAMETER")
+    fun intro(mode: GameMode): List<GameCue> = listOf(
             voice(
                 id = "intro_synopsis",
                 title = "Le retour de la Bête",
@@ -253,49 +253,15 @@ object GameSequenceFactory {
                     "avant qu'il ne s'empare de toutes nos âmes.",
             ),
         )
-        if (mode == GameMode.BEGINNER) {
-            add(
-                voice(
-                    id = "intro_roles",
-                    title = "Les rôles restent secrets",
-                    audio = "aides_402_roles_principe",
-                    seconds = 35,
-                    text = "Votre pierre indique votre rôle et reste cachée. Votre rôle peut " +
-                        "changer plusieurs fois pendant la partie.",
-                ),
-            )
-            add(
-                voice(
-                    id = "intro_turn",
-                    title = "Un tour : une nuit et un jour",
-                    audio = "aides_410_deroulement_nuit",
-                    seconds = 55,
-                    text = "La nuit, la meute se réunit et choisit une victime. Le jour, " +
-                        "le village débat puis tente une guérison.",
-                ),
-            )
-        }
-        if (mode == GameMode.BEGINNER) {
-            add(
-                voice(
-                    id = "intro_ready",
-                    title = "La partie peut commencer",
-                    audio = "commun_000_partie_prete",
-                    seconds = 6,
-                    text = "Vérifiez les pierres, le sac de guérison et la boîte des loups. " +
-                        "Quand tout le monde est prêt, lancez la première nuit.",
-                ),
-            )
-        }
-    }
 
+    @Suppress("UNUSED_PARAMETER")
     fun night(
         round: Int,
         color: NightColor?,
         mode: GameMode,
         packCallVillagerLimit: Int,
     ): List<GameCue> = buildList {
-        if (round == 1 && mode == GameMode.CONFIRMED) {
+        if (round == 1) {
             add(
                 timer(
                     id = ConfirmedFirstNightTimeline.CUE_ID,
@@ -309,7 +275,7 @@ object GameSequenceFactory {
             return@buildList
         }
 
-        if (round > 1 && mode == GameMode.CONFIRMED) {
+        if (round > 1) {
             requireNotNull(color) {
                 "Une nuit après la première doit avoir une couleur."
             }
@@ -326,85 +292,6 @@ object GameSequenceFactory {
             return@buildList
         }
 
-        add(
-            timer(
-                id = "night_departure_timer",
-                title = "Regagnez vos habitations",
-                text = "Vous avez 45 secondes pour vous asseoir ou vous allonger.",
-                audio = "commun_012_ambiance_nuit_boucle",
-                seconds = 45,
-            ),
-        )
-
-        if (round == 1) {
-            if (mode == GameMode.BEGINNER) {
-                addAll(firstNightBeginnerCues())
-            }
-        } else {
-            val resolvedColor = requireNotNull(color) {
-                "Une nuit après la première doit avoir une couleur."
-            }
-            add(wakePackCue(resolvedColor))
-            if (mode == GameMode.BEGINNER) {
-                addAll(laterNightBeginnerCues(packCallVillagerLimit))
-            }
-        }
-
-        add(
-            timer(
-                id = "night_council_timer",
-                title = if (round == 1) {
-                    "Première nuit"
-                } else {
-                    "Conseil des loups"
-                },
-                text = if (round == 1) {
-                    "Le loup-garou de sang se réveille et choisit sa première victime."
-                } else {
-                    "La meute s'identifie, choisit le mordeur puis sa victime."
-                },
-                audio = "commun_012_ambiance_nuit_boucle",
-                seconds = 115,
-                loopAudio = true,
-                replayable = true,
-            ),
-        )
-        add(
-            sound(
-                id = "night_second_beeps",
-                title = "La nuit s'achève",
-                text = "Onze bips annoncent la fin du conseil.",
-                audio = "commun_002_bips_11",
-                seconds = 11,
-            ),
-        )
-        add(
-            voice(
-                id = "night_sleep_again",
-                title = "Rendormez-vous",
-                text = "Tous les joueurs encore réveillés partent se rendormir.",
-                audio = "commun_004_tous_se_rendorment",
-                seconds = 6,
-            ),
-        )
-        add(
-            sound(
-                id = "night_rooster",
-                title = "Le jour se lève",
-                text = "Cocorico !",
-                audio = "commun_005_cocorico",
-                seconds = 5,
-            ),
-        )
-        add(
-            voice(
-                id = "night_village_wake",
-                title = "Réveil du village",
-                text = "Le village se réveille.",
-                audio = "commun_006_reveil_village",
-                seconds = 5,
-            ),
-        )
     }
 
     fun helpCues(packCallVillagerLimit: Int): List<GameCue> = listOf(
@@ -498,7 +385,7 @@ object GameSequenceFactory {
             title = "La Bête est vaincue",
             audio = "aides_440_fin_a",
             seconds = 70,
-            text = "Le loup-garou de sang s'est révélé lors de la guérison et a été abattu. " +
+            text = "Le loup-garou de sang s'est révélé lors de la guérison et a été tué. " +
                 "Les villageois gagnent et tentent maintenant de guérir les loups-garous et " +
                 "les goules. En cas d'échec de la guérison, c'est l'asile psychiatrique pour " +
                 "ces pauvres âmes.",
