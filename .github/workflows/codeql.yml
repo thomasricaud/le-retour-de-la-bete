@@ -14,6 +14,10 @@ on:
 permissions:
   contents: read
 
+env:
+  GRADLE_DEPENDENCY_VERIFICATION_ARGS: >-
+    ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]' && '--write-verification-metadata sha256' || '' }}
+
 jobs:
   analyze:
     name: Analyze Kotlin and Java
@@ -37,6 +41,10 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
 
+      - name: Install Android compile SDK
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0"
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
         with:
@@ -44,7 +52,9 @@ jobs:
           build-mode: manual
 
       - name: Build analyzed application
-        run: ./gradlew :app:assembleDebug --no-daemon --no-parallel
+        run: >-
+          ./gradlew $GRADLE_DEPENDENCY_VERIFICATION_ARGS
+          :app:assembleDebug --no-daemon --no-parallel
 
       - name: Analyze
         uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3

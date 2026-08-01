@@ -14,6 +14,10 @@ on:
 permissions:
   contents: read
 
+env:
+  GRADLE_DEPENDENCY_VERIFICATION_ARGS: >-
+    ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]' && '--write-verification-metadata sha256' || '' }}
+
 jobs:
   osv:
     name: Scan runtime SBOM with OSV
@@ -37,8 +41,14 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
 
+      - name: Install Android compile SDK
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0"
+
       - name: Generate runtime SBOM
-        run: ./gradlew :app:cyclonedxDirectBom --no-daemon --no-parallel
+        run: >-
+          ./gradlew $GRADLE_DEPENDENCY_VERIFICATION_ARGS
+          :app:cyclonedxDirectBom --no-daemon --no-parallel
 
       - name: Scan SBOM and create public reports
         id: osv
