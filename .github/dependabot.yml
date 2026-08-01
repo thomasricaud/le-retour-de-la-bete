@@ -30,3 +30,11 @@ updates:
       codeql:
         patterns:
           - "github/codeql-action/*"
+      android-build-actions:
+        patterns:
+          - "actions/setup-java"
+          - "gradle/actions/setup-gradle"
+      artifact-actions:
+        patterns:
+          - "actions/upload-artifact"
+          - "actions/download-artifact"
