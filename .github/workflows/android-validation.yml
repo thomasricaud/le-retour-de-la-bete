@@ -14,7 +14,7 @@ permissions:
 
 env:
   GRADLE_DEPENDENCY_VERIFICATION_ARGS: >-
-    ${{ github.actor == 'dependabot[bot]' && '--write-verification-metadata sha256' || '' }}
+    ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]' && '--write-verification-metadata sha256' || '' }}
 
 concurrency:
   group: android-validation-${{ github.workflow }}-${{ github.ref }}
@@ -40,7 +40,7 @@ jobs:
         uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
 
       - name: Install Android compile SDK
-        run: sdkmanager "platforms;android-37.0"
+        run: "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0"
 
       - name: Run unit tests, lint and debug build
         run: >-
@@ -48,7 +48,7 @@ jobs:
           testDebugUnitTest assembleDebug lintDebug --no-daemon --no-parallel
 
       - name: Report updated dependency checksums
-        if: github.actor == 'dependabot[bot]'
+        if: github.event.pull_request.user.login == 'dependabot[bot]'
         run: |
           if git diff --quiet -- gradle/verification-metadata.xml; then
             echo "Gradle verification metadata is already up to date."
@@ -57,7 +57,7 @@ jobs:
           fi
 
       - name: Upload generated dependency checksums
-        if: github.actor == 'dependabot[bot]'
+        if: github.event.pull_request.user.login == 'dependabot[bot]'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: gradle-verification-metadata-${{ github.run_attempt }}
@@ -86,7 +86,7 @@ jobs:
         uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
 
       - name: Install Android compile SDK
-        run: sdkmanager "platforms;android-37.0"
+        run: "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0"
 
       - name: Enable Android emulator acceleration
         run: |
