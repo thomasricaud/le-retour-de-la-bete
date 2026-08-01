@@ -20,7 +20,7 @@ $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 ```
 
 Le SDK Android est renseigné localement dans `local.properties`. Le projet
-utilise `compileSdk` et `targetSdk` 35, avec `minSdk` 26.
+utilise `compileSdk` 37, `targetSdk` 35 et `minSdk` 26.
 
 ## Build et validation
 
@@ -31,7 +31,7 @@ l'APK debug et lancer Android Lint :
 .\gradlew.bat testDebugUnitTest assembleDebug lintDebug --offline --no-daemon --no-parallel
 ```
 
-Cette commande a été validée avec le JDK ci-dessus et Gradle 8.10.2. Conserver
+Cette commande a été validée avec le JDK ci-dessus et Gradle 9.6.1. Conserver
 `--offline` pour les validations reproductibles lorsque les dépendances sont
 déjà en cache. Si une dépendance nouvelle manque réellement du cache, relancer
 ponctuellement sans `--offline` avec l'accès réseau approprié.

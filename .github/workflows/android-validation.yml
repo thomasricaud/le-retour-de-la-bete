@@ -12,6 +12,10 @@ on:
 permissions:
   contents: read
 
+env:
+  GRADLE_DEPENDENCY_VERIFICATION_ARGS: >-
+    ${{ github.actor == 'dependabot[bot]' && '--write-verification-metadata sha256' || '' }}
+
 concurrency:
   group: android-validation-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -35,8 +39,31 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
 
+      - name: Install Android compile SDK
+        run: sdkmanager "platforms;android-37.0"
+
       - name: Run unit tests, lint and debug build
-        run: ./gradlew testDebugUnitTest assembleDebug lintDebug --no-daemon --no-parallel
+        run: >-
+          ./gradlew $GRADLE_DEPENDENCY_VERIFICATION_ARGS
+          testDebugUnitTest assembleDebug lintDebug --no-daemon --no-parallel
+
+      - name: Report updated dependency checksums
+        if: github.actor == 'dependabot[bot]'
+        run: |
+          if git diff --quiet -- gradle/verification-metadata.xml; then
+            echo "Gradle verification metadata is already up to date."
+          else
+            echo "::warning file=gradle/verification-metadata.xml::Dependabot resolved new artifacts. Review and commit the generated SHA-256 metadata before merging."
+          fi
+
+      - name: Upload generated dependency checksums
+        if: github.actor == 'dependabot[bot]'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: gradle-verification-metadata-${{ github.run_attempt }}
+          path: gradle/verification-metadata.xml
+          if-no-files-found: error
+          retention-days: 14
 
   device-smoke:
     name: Install and run on Android emulator
@@ -58,6 +85,9 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
 
+      - name: Install Android compile SDK
+        run: sdkmanager "platforms;android-37.0"
+
       - name: Enable Android emulator acceleration
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
@@ -67,7 +97,8 @@ jobs:
 
       - name: Install and exercise the debug application
         run: |
-          ./gradlew pixel2Api35DebugAndroidTest \
+          ./gradlew $GRADLE_DEPENDENCY_VERIFICATION_ARGS \
+            pixel2Api35DebugAndroidTest \
             -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect \
             --no-daemon --no-parallel
 

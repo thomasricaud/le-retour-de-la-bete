@@ -1,6 +1,5 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.cyclonedx.bom")
 }
@@ -15,7 +14,7 @@ val appVersionName = providers.gradleProperty("appVersionName").orElse("0.4.6")
 
 android {
     namespace = "fr.leretourdelabete"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "fr.leretourdelabete"
@@ -59,10 +58,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
     buildFeatures {
         compose = true
         buildConfig = true
@@ -71,8 +66,8 @@ android {
     testOptions {
         animationsDisabled = true
         managedDevices {
-            devices {
-                create<com.android.build.api.dsl.ManagedVirtualDevice>("pixel2Api35") {
+            localDevices {
+                create("pixel2Api35") {
                     device = "Pixel 2"
                     apiLevel = 35
                     systemImageSource = "aosp-atd"
