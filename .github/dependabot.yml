@@ -38,3 +38,7 @@ updates:
         patterns:
           - "actions/upload-artifact"
           - "actions/download-artifact"
+      pages-actions:
+        patterns:
+          - "actions/upload-pages-artifact"
+          - "actions/deploy-pages"
