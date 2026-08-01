@@ -17,6 +17,10 @@ updates:
           - "org.jetbrains.kotlin.*"
           - "androidx.compose:*"
           - "androidx.lifecycle:*"
+      androidx-foundation:
+        patterns:
+          - "androidx.core:*"
+          - "androidx.activity:*"
 
   - package-ecosystem: github-actions
     directory: "/"
