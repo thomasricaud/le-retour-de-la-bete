@@ -9,7 +9,8 @@ Le workflow :
 1. valide un tag au format `vMAJEUR.MINEUR.CORRECTIF` et injecte cette version
    dans l'APK ;
 2. calcule un `versionCode` Android croissant à partir des trois composantes ;
-3. exécute les tests unitaires et Android Lint ;
+3. exécute les tests unitaires, Android Lint et un parcours instrumenté sur un
+   émulateur Android API 35 ;
 4. construit un APK `release` signé ;
 5. vérifie cryptographiquement la signature ;
 6. produit une nomenclature CycloneDX des dépendances d’exécution ;
@@ -30,6 +31,10 @@ Le workflow :
 - Toutes les actions GitHub sont référencées par leur SHA de commit complet.
 - CodeQL analyse le code Kotlin/Java à chaque changement de `main`, pull request
   et exécution hebdomadaire.
+- `.github/workflows/android-validation.yml` construit l'APK debug sur chaque
+  pull request, puis l'installe et l'exécute dans un appareil virtuel API 35.
+  Le test vérifie le parcours de l'accueil jusqu'à la préparation d'une partie.
+  Le workflow de release rejoue le même contrôle avant de publier l'APK signé.
 - Dependabot et la revue des dépendances signalent ou refusent les versions
   affectées par une vulnérabilité connue. Le graphe soumis à GitHub est limité
   à `:app:releaseRuntimeClasspath`, c’est-à-dire aux composants destinés à

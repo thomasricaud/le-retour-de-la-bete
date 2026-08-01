@@ -23,6 +23,7 @@ android {
         targetSdk = 35
         versionCode = appVersionCode.get()
         versionName = appVersionName.get()
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         vectorDrawables.useSupportLibrary = true
     }
@@ -67,6 +68,19 @@ android {
         buildConfig = true
     }
 
+    testOptions {
+        animationsDisabled = true
+        managedDevices {
+            devices {
+                create<com.android.build.api.dsl.ManagedVirtualDevice>("pixel2Api35") {
+                    device = "Pixel 2"
+                    apiLevel = 35
+                    systemImageSource = "aosp-atd"
+                }
+            }
+        }
+    }
+
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
@@ -87,7 +101,13 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
 
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation(platform("androidx.compose:compose-bom:2024.12.01"))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+
     debugImplementation("androidx.compose.ui:ui-tooling")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
 
 tasks.cyclonedxDirectBom {

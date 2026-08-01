@@ -44,6 +44,21 @@ Pour un contrôle ciblé pendant le développement :
 .\gradlew.bat lintDebug --offline --no-daemon --no-parallel
 ```
 
+Les pull requests et les releases exécutent aussi un test instrumenté sur un
+appareil Android virtuel API 35. Ce test installe l'APK debug, lance
+`MainActivity` et vérifie le parcours de l'accueil jusqu'à la préparation
+d'une partie. Pour le reproduire sur une machine capable de lancer
+l'émulateur Android :
+
+```powershell
+.\gradlew.bat pixel2Api35DebugAndroidTest `
+  "-Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect" `
+  --no-daemon --no-parallel
+```
+
+Le passage de ce test dans GitHub Actions est nécessaire pour valider une mise
+à niveau Android, Gradle, Kotlin ou Compose proposée par Dependabot.
+
 L'APK produit se trouve dans
 `app\build\outputs\apk\debug\app-debug.apk`. La variante debug utilise le
 package `fr.leretourdelabete.debug` et peut cohabiter avec la version publiée.
