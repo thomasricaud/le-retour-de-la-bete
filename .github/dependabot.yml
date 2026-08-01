@@ -33,7 +33,7 @@ updates:
       android-build-actions:
         patterns:
           - "actions/setup-java"
-          - "gradle/actions/setup-gradle"
+          - "gradle/actions/*"
       artifact-actions:
         patterns:
           - "actions/upload-artifact"
