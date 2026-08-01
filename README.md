@@ -101,6 +101,13 @@ Pré-requis : JDK 17 et Android SDK 35.
 .\gradlew.bat lintDebug --offline --no-daemon
 ```
 
+Le workflow GitHub Actions `Android validation` exécute ces contrôles sur
+chaque pull request, puis installe l'APK debug dans un émulateur Android API 35.
+Un test Compose lance l'application et parcourt l'accueil, l'étape Bluetooth
+et l'écran de préparation d'une partie. Les mises à niveau Dependabot sont
+ainsi refusées si l'application ne compile plus, ne s'installe plus ou ne
+démarre plus correctement.
+
 APK de développement :
 `app/build/outputs/apk/debug/app-debug.apk`.
 
