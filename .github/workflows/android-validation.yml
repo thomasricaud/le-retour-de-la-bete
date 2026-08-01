@@ -14,7 +14,7 @@ permissions:
 
 env:
   GRADLE_DEPENDENCY_VERIFICATION_ARGS: >-
-    ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]' && '--write-verification-metadata sha256' || '' }}
+    ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]' && '--refresh-dependencies --write-verification-metadata sha256' || '' }}
 
 concurrency:
   group: android-validation-${{ github.workflow }}-${{ github.ref }}
