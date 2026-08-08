@@ -41,13 +41,16 @@ reste utilisable avec le texte et une minuterie silencieuse.
 
 Le moteur conserve deux lecteurs indépendants sous un même focus audio :
 
-- un lecteur d'ambiance stéréo atténué à 28 %, en boucle continue pendant la
-  phase Nuit ou Jour ;
+- un lecteur d'ambiance stéréo atténué à 28 %, utilisé pour la nuit et pour les
+  boucles propres à chaque étape du jour ;
 - un lecteur de premier plan à plein volume pour les voix, les bips, le
   cocorico et les autres effets.
 
-Le passage au Jour remplace la boucle nocturne par la boucle diurne. La boucle
-diurne reste active pendant le tirage, jusqu'au lancement de la nuit suivante.
+Le passage au Jour arrête la boucle nocturne. Si l'ambiance de jour est activée,
+la concertation utilise `jour_8min`, le conseil enchaîne `gong` puis
+`conseil_villageois_votes_boucle`, et la guérison utilise `guerison_boucle`.
+L'ambiance diurne historique reste active pendant le tirage, jusqu'au lancement
+de la nuit suivante.
 
 ## Automate principal
 

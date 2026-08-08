@@ -300,8 +300,7 @@ private fun BluetoothSetupScreen(
             ) {
                 ScreenTitle(
                     title = "Connexion Bluetooth",
-                    subtitle = "Vérifiez la connexion de votre téléphone au système audio " +
-                        "pour le bon déroulement de partie.",
+                    subtitle = "Vérifiez la connexion de votre téléphone au système audio.",
                 )
                 LargeActionButton(
                     label = "RETOUR",
@@ -653,7 +652,7 @@ private fun MaterialSummary(
         )
         InlineLabelValue(
             "Pierres dans la boîte des loups",
-            "$playerCount violettes",
+            "$secondary violettes",
         )
         if (drawMode == DrawMode.PHYSICAL_CARDS) {
             InlineLabelValue(

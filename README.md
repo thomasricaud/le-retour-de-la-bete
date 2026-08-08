@@ -55,13 +55,13 @@ non bloquante vérifie uniquement la dernière release GitHub au démarrage.
 - Téléchargement suivi par le gestionnaire Android lorsqu'une release GitHub
   plus récente existe, puis proposition d'ouvrir l'installateur ; sans
   connexion, l'application démarre normalement et n'affiche aucune erreur.
-- Le catalogue prévoit 66 ressources audio. L'ambiance nocturne tourne en
-  continu pendant toute la nuit et l'ambiance de village diurne, sans voix,
-  pendant tout le jour. Les consignes et effets (notamment le cocorico) sont
-  joués simultanément au premier plan. Une ressource absente est remplacée par
-  son texte affiché, sans bloquer la partie.
+- Le catalogue prévoit 71 ressources audio. L'ambiance nocturne tourne en
+  continu pendant la nuit. Le jour utilise des sons dédiés à la concertation,
+  au conseil, au rituel de guérison et à la victoire sur la Bête. Les consignes
+  et effets sont joués sur un lecteur indépendant. Une ressource absente est
+  remplacée par son texte affiché, sans bloquer la partie.
 
-Le catalogue complet des 66 enregistrements attendus se trouve dans
+Le catalogue complet des 71 enregistrements attendus se trouve dans
 [`docs/AUDIO_ASSETS.md`](docs/AUDIO_ASSETS.md). Le manifeste exploitable par un
 outil de production se trouve dans
 [`app/src/main/assets/audio_manifest.json`](app/src/main/assets/audio_manifest.json).

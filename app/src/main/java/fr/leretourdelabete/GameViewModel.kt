@@ -25,6 +25,7 @@ import fr.leretourdelabete.domain.GameCue
 import fr.leretourdelabete.domain.GameSequenceFactory
 import fr.leretourdelabete.domain.NightDeck
 import fr.leretourdelabete.domain.PackCallRule
+import fr.leretourdelabete.domain.VioletStoneRules
 import fr.leretourdelabete.model.DayStage
 import fr.leretourdelabete.model.DrawMode
 import fr.leretourdelabete.model.EndReason
@@ -60,6 +61,7 @@ data class GameUiState(
     val isSequenceComplete: Boolean = false,
     val currentCueHasAudio: Boolean = false,
     val dayTimerPlaying: Boolean = false,
+    val dayTimerDisplayResetKey: Int = 0,
     val audioRoute: AudioRouteState = AudioRouteState(),
     val statusMessage: String? = null,
     val standaloneCueId: String? = null,
@@ -95,6 +97,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private var activeSequence: List<GameCue> = emptyList()
     private var sequenceJob: Job? = null
     private var dayTimerJob: Job? = null
+    private var dayStageAudioJob: Job? = null
     private var standaloneJob: Job? = null
     private var updateDownloadJob: Job? = null
     private var lastPersistedSecond: Long = -1L
@@ -151,6 +154,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             mode = setup.mode,
             drawMode = setup.drawMode,
             playerCount = setup.playerCount,
+            violetStonesInWolfBox = VioletStoneRules.initialCount(setup.playerCount),
             packCallVillagerLimit = PackCallRule.maxRemainingVillagers(setup.playerCount),
             dayDurationMinutes = setup.dayDurationMinutes,
             dayAmbienceEnabled = setup.dayAmbienceEnabled,
@@ -191,7 +195,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         )
         if (saved.screen == GameScreen.INTRO || saved.screen == GameScreen.NIGHT) {
             loadSequenceFor(saved, autoplay = false)
-        } else if (saved.screen == GameScreen.DAY || saved.screen == GameScreen.DRAW) {
+        } else if (saved.screen == GameScreen.DAY) {
+            startDayStageAudio(saved.dayStage)
+        } else if (saved.screen == GameScreen.DRAW) {
             startPhaseAmbience()
         }
     }
@@ -274,6 +280,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun pauseForStopDialog() {
         pauseSequence()
+        dayStageAudioJob?.cancel()
+        dayStageAudioJob = null
         if (_uiState.value.dayTimerPlaying) {
             dayTimerJob?.cancel()
             dayTimerJob = null
@@ -284,10 +292,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         audioEngine.stopAmbience()
     }
 
+    fun pauseForPackCallDialog() {
+        pauseSequence()
+    }
+
     fun pauseAndReturnHome() {
         pauseSequence()
         dayTimerJob?.cancel()
         dayTimerJob = null
+        dayStageAudioJob?.cancel()
+        dayStageAudioJob = null
         audioEngine.stopAll()
         repository.save(_uiState.value.session)
         _uiState.value = _uiState.value.copy(
@@ -318,10 +332,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         if (state.dayTimerPlaying) {
             dayTimerJob?.cancel()
             dayTimerJob = null
+            audioEngine.pauseAmbience()
             _uiState.value = state.copy(dayTimerPlaying = false)
             repository.save(state.session)
         } else {
-            startPhaseAmbience()
+            startDiscussionAudio(restart = false)
             startDayTimer()
         }
     }
@@ -329,12 +344,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun resetDayTimer() {
         dayTimerJob?.cancel()
         dayTimerJob = null
+        stopDayStageAudio()
         val duration = _uiState.value.session.dayDurationMinutes * 60_000L
         val session = _uiState.value.session.copy(dayRemainingMillis = duration)
         repository.save(session)
         _uiState.value = _uiState.value.copy(
             session = session,
             dayTimerPlaying = false,
+            dayTimerDisplayResetKey = _uiState.value.dayTimerDisplayResetKey + 1,
         )
     }
 
@@ -347,21 +364,24 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             DayStage.HEALING_EFFECT,
             -> return
         }
-        dayTimerJob?.cancel()
-        dayTimerJob = null
-        val session = current.copy(dayStage = next)
-        repository.save(session)
-        _uiState.value = _uiState.value.copy(
-            session = session,
-            dayTimerPlaying = false,
-        )
+        moveToDayStage(next)
     }
 
     fun showHealingEffect(outcome: HealingOutcome) {
-        stopStandalone()
-        val session = _uiState.value.session.copy(
+        stopDayStageAudio()
+        val current = _uiState.value.session
+        val violetStones = if (outcome == HealingOutcome.WEREWOLF) {
+            VioletStoneRules.afterWerewolfHealing(
+                current.violetStonesInWolfBox,
+                current.playerCount,
+            )
+        } else {
+            current.violetStonesInWolfBox
+        }
+        val session = current.copy(
             dayStage = DayStage.HEALING_EFFECT,
             healingOutcome = outcome,
+            violetStonesInWolfBox = violetStones,
         )
         repository.save(session)
         _uiState.value = _uiState.value.copy(
@@ -474,6 +494,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun finishGame(reason: EndReason) {
+        val playBloodWolfVictory = reason == EndReason.BLOOD_WOLF_FOUND &&
+            _uiState.value.session.dayAmbienceEnabled
         stopAllPlayback()
         val session = _uiState.value.session.copy(
             screen = GameScreen.END,
@@ -485,6 +507,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             hasSavedGame = false,
             statusMessage = null,
         )
+        if (playBloodWolfVictory) {
+            audioEngine.playForeground(BLOOD_WOLF_VICTORY_RESOURCE)
+        }
     }
 
     fun openHelp() {
@@ -827,6 +852,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val duration = current.dayDurationMinutes * 60_000L
         val session = current.copy(
             screen = GameScreen.DAY,
+            violetStonesInWolfBox = VioletStoneRules.afterNight(
+                current.violetStonesInWolfBox,
+            ),
             dayStage = DayStage.DISCUSSION,
             healingOutcome = null,
             dayRemainingMillis = duration,
@@ -842,12 +870,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             dayTimerPlaying = false,
             statusMessage = null,
         )
-        startPhaseAmbience()
+        startDayStageAudio(DayStage.DISCUSSION)
     }
 
     private fun startDayTimer() {
         dayTimerJob?.cancel()
-        _uiState.value = _uiState.value.copy(dayTimerPlaying = true)
+        _uiState.value = _uiState.value.copy(
+            dayTimerPlaying = true,
+            dayTimerDisplayResetKey = _uiState.value.dayTimerDisplayResetKey + 1,
+        )
         dayTimerJob = viewModelScope.launch {
             var previousTick = SystemClock.elapsedRealtime()
             while (_uiState.value.dayTimerPlaying) {
@@ -861,10 +892,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 _uiState.value = _uiState.value.copy(session = session)
                 if (remaining % 1_000L < 250L) repository.save(session)
                 if (remaining == 0L) {
-                    _uiState.value = _uiState.value.copy(
-                        dayTimerPlaying = false,
-                        statusMessage = "Le temps de concertation est écoulé.",
-                    )
+                    dayTimerJob = null
+                    moveToDayStage(DayStage.COUNCIL)
                     break
                 }
             }
@@ -918,6 +947,84 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private fun moveToDayStage(next: DayStage) {
+        dayTimerJob?.cancel()
+        dayTimerJob = null
+        stopDayStageAudio()
+        val session = _uiState.value.session.copy(dayStage = next)
+        repository.save(session)
+        _uiState.value = _uiState.value.copy(
+            session = session,
+            dayTimerPlaying = false,
+            statusMessage = null,
+        )
+        startDayStageAudio(next)
+    }
+
+    private fun startDayStageAudio(stage: DayStage) {
+        when (stage) {
+            DayStage.DISCUSSION -> {
+                if (_uiState.value.session.dayDurationMinutes == 0) {
+                    startDiscussionAudio(restart = true)
+                } else {
+                    stopDayStageAudio()
+                }
+            }
+            DayStage.COUNCIL -> startCouncilAudio()
+            DayStage.HEALING -> startLoopingDayAudio(HEALING_LOOP_RESOURCE)
+            DayStage.HEALING_EFFECT -> stopDayStageAudio()
+        }
+    }
+
+    private fun startDiscussionAudio(restart: Boolean) {
+        dayStageAudioJob?.cancel()
+        dayStageAudioJob = null
+        audioEngine.stopForeground()
+        if (!_uiState.value.session.dayAmbienceEnabled) {
+            audioEngine.stopAmbience()
+            return
+        }
+        if (restart) audioEngine.stopAmbience()
+        audioEngine.playAmbience(DAY_DISCUSSION_RESOURCE)
+    }
+
+    private fun startCouncilAudio() {
+        stopDayStageAudio()
+        if (!_uiState.value.session.dayAmbienceEnabled) return
+        val gong = audioEngine.playForeground(COUNCIL_GONG_RESOURCE)
+        if (!gong.available || gong.durationMillis <= 0L) {
+            audioEngine.playAmbience(COUNCIL_LOOP_RESOURCE)
+            return
+        }
+        dayStageAudioJob = viewModelScope.launch {
+            delay(gong.durationMillis)
+            val session = _uiState.value.session
+            if (
+                session.screen == GameScreen.DAY &&
+                session.dayStage == DayStage.COUNCIL &&
+                session.dayAmbienceEnabled
+            ) {
+                audioEngine.stopForeground()
+                audioEngine.playAmbience(COUNCIL_LOOP_RESOURCE)
+            }
+            dayStageAudioJob = null
+        }
+    }
+
+    private fun startLoopingDayAudio(resourceName: String) {
+        stopDayStageAudio()
+        if (_uiState.value.session.dayAmbienceEnabled) {
+            audioEngine.playAmbience(resourceName)
+        }
+    }
+
+    private fun stopDayStageAudio() {
+        dayStageAudioJob?.cancel()
+        dayStageAudioJob = null
+        audioEngine.stopForeground()
+        audioEngine.stopAmbience()
+    }
+
     private fun colorAnnouncement(color: NightColor): GameCue =
         if (color == NightColor.YELLOW) {
             GameCue(
@@ -940,9 +1047,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun startPhaseAmbience(): PlaybackInfo? {
         val resourceName = when (_uiState.value.session.screen) {
             GameScreen.NIGHT -> NIGHT_AMBIENCE_RESOURCE
-            GameScreen.DAY,
-            GameScreen.DRAW,
-            -> DAY_AMBIENCE_RESOURCE.takeIf {
+            GameScreen.DRAW -> DAY_AMBIENCE_RESOURCE.takeIf {
                 _uiState.value.session.dayAmbienceEnabled
             }
             else -> null
@@ -963,6 +1068,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val timerWasPlaying = _uiState.value.dayTimerPlaying
         dayTimerJob?.cancel()
         dayTimerJob = null
+        dayStageAudioJob?.cancel()
+        dayStageAudioJob = null
         standaloneJob?.cancel()
         standaloneJob = null
         audioEngine.stopAll()
@@ -1046,6 +1153,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         stopSequenceClock()
         dayTimerJob?.cancel()
         dayTimerJob = null
+        dayStageAudioJob?.cancel()
+        dayStageAudioJob = null
         standaloneJob?.cancel()
         standaloneJob = null
         audioEngine.stopAll()
@@ -1066,5 +1175,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private companion object {
         const val NIGHT_AMBIENCE_RESOURCE = "commun_012_ambiance_nuit_boucle"
         const val DAY_AMBIENCE_RESOURCE = "commun_013_ambiance_jour_boucle"
+        const val DAY_DISCUSSION_RESOURCE = "jour_8min"
+        const val COUNCIL_GONG_RESOURCE = "gong"
+        const val COUNCIL_LOOP_RESOURCE = "conseil_villageois_votes_boucle"
+        const val HEALING_LOOP_RESOURCE = "guerison_boucle"
+        const val BLOOD_WOLF_VICTORY_RESOURCE = "fin_partie_a"
     }
 }

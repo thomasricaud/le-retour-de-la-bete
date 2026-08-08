@@ -1,6 +1,6 @@
 # Ressources audio
 
-Ce document est le contrat de production et d'intégration des 66 ressources audio
+Ce document est le contrat de production et d'intégration des 71 ressources audio
 livrées avec l'application.
 
 Les 66 fichiers audio du manifeste sont fournis dans le dépôt. Les textes
@@ -56,14 +56,20 @@ rédaction de ce document.
   un seuil précis.
 - Les nuits suivantes utilisent la piste continue de 258 secondes et ses extraits
   dédiés aux actions « Avancer ».
-- `commun_013_ambiance_jour_boucle` est désactivé par défaut. Si l'option
-  « Ambiance sonore le jour » est cochée, il accompagne le Jour puis le tirage de
-  la prochaine nuit.
+- L'option « Ambiance sonore le jour » est activée par défaut. Pendant la
+  concertation, `jour_8min` démarre immédiatement en durée libre ou avec le
+  minuteur en durée imposée. Le conseil joue `gong` une fois puis
+  `conseil_villageois_votes_boucle` en boucle. Le rituel joue
+  `guerison_boucle` en boucle.
+- `commun_013_ambiance_jour_boucle` reste l'ambiance du tirage de la prochaine
+  nuit lorsque l'option de jour est activée.
 - Les voix et effets utilisent un second `MediaPlayer` : ils ne coupent donc pas
   l'ambiance de phase et sont mixés par-dessus à plein volume. L'ambiance est
   atténuée à 28 %.
-- Les sons de fin `aides_440`, `aides_442` et `aides_443` sont lus uniquement à la
-  demande via l'action « Écouter la fin ».
+- `fin_partie_a` est joué automatiquement lorsque le loup-garou de sang est
+  révélé. Le récit `aides_440` reste distinct et n'est lu que via l'action
+  « Écouter la fin ». Les récits `aides_442` et `aides_443` restent également à
+  la demande.
 
 ## Recommandations d'enregistrement
 
@@ -73,8 +79,10 @@ rédaction de ce document.
 - Supprimer les silences de tête et de fin ; le moteur gère les temps de jeu.
 - Pour les voix : mono, 44,1 kHz ou 48 kHz, 96 à 128 kbit/s.
 - Normaliser toutes les voix au même niveau perçu et éviter l'écrêtage.
-- `commun_012_ambiance_nuit_boucle.mp3` et
-  `commun_013_ambiance_jour_boucle.mp3` doivent former des boucles sans raccord audible.
+- `commun_012_ambiance_nuit_boucle.mp3`,
+  `commun_013_ambiance_jour_boucle.mp3`, `jour_8min.mp3`,
+  `conseil_villageois_votes_boucle.mp3` et `guerison_boucle.mp3` doivent former
+  des boucles sans raccord audible.
 
 ## Inventaire exhaustif
 
@@ -164,10 +172,43 @@ rédaction de ce document.
 #### `commun_013_ambiance_jour_boucle.mp3`
 
 - Type : ambiance en boucle.
-- Durée moteur : toute la phase Jour, tirage de la prochaine nuit compris.
+- Durée moteur : tirage de la prochaine nuit.
 - Texte parlé : aucun.
 - Production exacte : ambiance diurne claire, plus légère que la nuit et parfaitement
   bouclable, sans voix ni événement susceptible de masquer une consigne.
+
+#### `jour_8min.mp3`
+
+- Type : ambiance en boucle.
+- Durée moteur : toute la concertation du village.
+- Démarrage : immédiat en durée libre ; au démarrage du minuteur en durée
+  imposée.
+- Texte parlé : aucun.
+
+#### `gong.mp3`
+
+- Type : effet sonore unique.
+- Durée moteur : durée réelle du MP3.
+- Usage : introduction du conseil des villageois.
+
+#### `conseil_villageois_votes_boucle.mp3`
+
+- Type : ambiance en boucle.
+- Durée moteur : du terme du gong jusqu'à l'action « Procéder à la guérison ».
+- Texte parlé : aucun.
+
+#### `guerison_boucle.mp3`
+
+- Type : ambiance en boucle.
+- Durée moteur : toute la phase « Rituel de guérison ».
+- Texte parlé : aucun.
+
+#### `fin_partie_a.mp3`
+
+- Type : effet sonore unique.
+- Durée moteur : durée réelle du MP3.
+- Usage : lecture automatique lorsque le loup-garou de sang est révélé.
+- Le bouton « Écouter la fin » conserve `aides_440_fin_a.mp3`.
 
 ### Débutant
 

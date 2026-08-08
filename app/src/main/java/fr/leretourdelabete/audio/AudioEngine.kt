@@ -131,6 +131,10 @@ class AudioEngine(
         ambiencePlayer?.takeIf { it.isPlaying }?.pause()
     }
 
+    fun pauseAmbience() {
+        ambiencePlayer?.takeIf { it.isPlaying }?.pause()
+    }
+
     fun stopForeground() {
         releasePlayer(foregroundPlayer)
         foregroundPlayer = null

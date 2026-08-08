@@ -173,6 +173,7 @@ fun SequenceScreen(
                     onCancelPackCall = { showPackConfirmation = false },
                     onConfirmPackCall = {
                         showPackConfirmation = false
+                        viewModel.pauseForPackCallDialog()
                         showPackDialog = true
                     },
                 )
@@ -550,6 +551,24 @@ private fun DiscussionStage(
     state: GameUiState,
     viewModel: GameViewModel,
 ) {
+    val hasTimer = state.session.dayDurationMinutes > 0
+    var showTimer by remember(
+        hasTimer,
+        state.dayTimerDisplayResetKey,
+    ) { mutableStateOf(true) }
+
+    LaunchedEffect(hasTimer, state.dayTimerDisplayResetKey) {
+        if (hasTimer) {
+            showTimer = true
+            while (true) {
+                delay(5_000L)
+                showTimer = !showTimer
+            }
+        }
+    }
+
+    val violetStoneText =
+        "${state.session.violetStonesInWolfBox} pierres violettes dans la boîte des loups"
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -568,20 +587,22 @@ private fun DiscussionStage(
         )
         Spacer(Modifier.height(18.dp))
         Text(
-            if (state.session.dayDurationMinutes == 0) {
-                "TEMPS LIBRE"
+            if (!hasTimer || !showTimer) {
+                violetStoneText
             } else {
                 formatDuration(state.session.dayRemainingMillis)
             },
-            fontSize = 52.sp,
+            fontSize = if (hasTimer && showTimer) 52.sp else 30.sp,
             fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(0.9f),
         )
         Spacer(Modifier.height(14.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(0.96f),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            if (state.session.dayDurationMinutes > 0) {
+        if (hasTimer) {
+            Row(
+                modifier = Modifier.fillMaxWidth(0.96f),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
                 LargeActionButton(
                     if (state.dayTimerPlaying) "PAUSE" else "DÉMARRER",
                     viewModel::startOrPauseDayTimer,
@@ -594,11 +615,17 @@ private fun DiscussionStage(
                     modifier = Modifier.weight(1f),
                     tone = ActionTone.SECONDARY,
                 )
+                LargeActionButton(
+                    "PASSER AU CONSEIL",
+                    viewModel::advanceDayStage,
+                    modifier = Modifier.weight(1.25f),
+                )
             }
+        } else {
             LargeActionButton(
                 "PASSER AU CONSEIL",
                 viewModel::advanceDayStage,
-                modifier = Modifier.weight(1.25f),
+                modifier = Modifier.fillMaxWidth(0.62f),
             )
         }
     }
@@ -976,7 +1003,9 @@ fun EndScreen(
                 containerAlpha = 0.64f,
             ) {
                 Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
@@ -992,7 +1021,13 @@ fun EndScreen(
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center,
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(
+                            10.dp,
+                            Alignment.CenterHorizontally,
+                        ),
+                    ) {
                         if (cue != null) {
                             LargeActionButton(
                                 "ÉCOUTER LA FIN",

@@ -4,7 +4,7 @@
   "resource_directory": "app/src/main/res/raw",
   "file_extension": ".mp3",
   "flat_android_raw_directory": true,
-  "asset_count": 66,
+  "asset_count": 71,
   "timing_contract": {
     "departure_ms": 45000,
     "wolf_council_ms": 115000,
@@ -35,7 +35,14 @@
       "night": "commun_012_ambiance_nuit_boucle",
       "day": "commun_013_ambiance_jour_boucle"
     },
-    "notes": "Les ambiances de phase tournent en boucle sur un lecteur dédié. Les voix et effets disponibles sont joués simultanément sur un second lecteur et utilisent leur durée MediaPlayer réelle."
+    "day_stage_basenames": {
+      "discussion": "jour_8min",
+      "council_intro": "gong",
+      "council_loop": "conseil_villageois_votes_boucle",
+      "healing_loop": "guerison_boucle",
+      "blood_wolf_victory": "fin_partie_a"
+    },
+    "notes": "Les ambiances de phase tournent en boucle sur un lecteur dédié. Les voix et effets disponibles sont joués simultanément sur un second lecteur et utilisent leur durée MediaPlayer réelle. Les sons de jour dédiés ne sont joués que lorsque l'option Ambiance sonore le jour est activée."
   },
   "assets": [
     {
@@ -140,6 +147,56 @@
       "loop": true,
       "spoken_text": null,
       "production_direction": "Ambiance diurne claire, plus légère que la nuit, parfaitement bouclable, sans voix et assez discrète pour laisser les consignes et effets au premier plan."
+    },
+    {
+      "basename": "jour_8min",
+      "filename": "jour_8min.mp3",
+      "category": "commun",
+      "kind": "phase_loop",
+      "motor_durations_ms": [],
+      "loop": true,
+      "spoken_text": null,
+      "production_direction": "Ambiance de concertation du village, jouée immédiatement en durée libre ou au démarrage du minuteur en durée imposée."
+    },
+    {
+      "basename": "gong",
+      "filename": "gong.mp3",
+      "category": "commun",
+      "kind": "sound_effect",
+      "motor_durations_ms": [],
+      "loop": false,
+      "spoken_text": null,
+      "production_direction": "Introduction unique du conseil des villageois, avant la boucle de vote."
+    },
+    {
+      "basename": "conseil_villageois_votes_boucle",
+      "filename": "conseil_villageois_votes_boucle.mp3",
+      "category": "commun",
+      "kind": "phase_loop",
+      "motor_durations_ms": [],
+      "loop": true,
+      "spoken_text": null,
+      "production_direction": "Boucle du conseil des villageois, après le gong et jusqu'au rituel de guérison."
+    },
+    {
+      "basename": "guerison_boucle",
+      "filename": "guerison_boucle.mp3",
+      "category": "commun",
+      "kind": "phase_loop",
+      "motor_durations_ms": [],
+      "loop": true,
+      "spoken_text": null,
+      "production_direction": "Boucle du rituel de guérison."
+    },
+    {
+      "basename": "fin_partie_a",
+      "filename": "fin_partie_a.mp3",
+      "category": "commun",
+      "kind": "sound_effect",
+      "motor_durations_ms": [],
+      "loop": false,
+      "spoken_text": null,
+      "production_direction": "Effet unique joué automatiquement lorsque le loup-garou de sang est révélé."
     },
     {
       "basename": "debutant_101_premiere_nuit_reveil_sang",

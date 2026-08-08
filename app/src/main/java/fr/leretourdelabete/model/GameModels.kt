@@ -1,5 +1,7 @@
 package fr.leretourdelabete.model
 
+import fr.leretourdelabete.domain.VioletStoneRules
+
 enum class GameMode {
     BEGINNER,
     CONFIRMED,
@@ -58,7 +60,7 @@ data class SetupOptions(
     val mode: GameMode = GameMode.BEGINNER,
     val drawMode: DrawMode = DrawMode.APPLICATION,
     val dayDurationMinutes: Int = 5,
-    val dayAmbienceEnabled: Boolean = false,
+    val dayAmbienceEnabled: Boolean = true,
     val aiVoice: AiVoice = AiVoice.MALE,
 )
 
@@ -67,6 +69,7 @@ data class GameSession(
     val mode: GameMode = GameMode.BEGINNER,
     val drawMode: DrawMode = DrawMode.APPLICATION,
     val playerCount: Int = 6,
+    val violetStonesInWolfBox: Int = VioletStoneRules.initialCount(playerCount),
     val packCallVillagerLimit: Int = 2,
     val dayDurationMinutes: Int = 5,
     val dayAmbienceEnabled: Boolean = false,

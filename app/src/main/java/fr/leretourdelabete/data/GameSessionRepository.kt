@@ -2,6 +2,7 @@ package fr.leretourdelabete.data
 
 import android.content.Context
 import fr.leretourdelabete.domain.PackCallRule
+import fr.leretourdelabete.domain.VioletStoneRules
 import fr.leretourdelabete.model.AiVoice
 import fr.leretourdelabete.model.DayStage
 import fr.leretourdelabete.model.DrawMode
@@ -21,6 +22,7 @@ class GameSessionRepository(context: Context) {
             .putString(KEY_MODE, session.mode.name)
             .putString(KEY_DRAW_MODE, session.drawMode.name)
             .putInt(KEY_PLAYERS, session.playerCount)
+            .putInt(KEY_VIOLET_STONES, session.violetStonesInWolfBox)
             .putInt(KEY_PACK_CALL_VILLAGER_LIMIT, session.packCallVillagerLimit)
             .putInt(KEY_DAY_MINUTES, session.dayDurationMinutes)
             .putBoolean(KEY_DAY_AMBIENCE, session.dayAmbienceEnabled)
@@ -63,6 +65,10 @@ class GameSessionRepository(context: Context) {
                 DrawMode.APPLICATION,
             ),
             playerCount = playerCount,
+            violetStonesInWolfBox = preferences.getInt(
+                KEY_VIOLET_STONES,
+                VioletStoneRules.initialCount(playerCount),
+            ).coerceIn(0, VioletStoneRules.initialCount(playerCount)),
             packCallVillagerLimit = packCallVillagerLimit,
             dayDurationMinutes = preferences.getInt(KEY_DAY_MINUTES, 5)
                 .coerceIn(0, 30),
@@ -135,6 +141,7 @@ class GameSessionRepository(context: Context) {
         const val KEY_MODE = "mode"
         const val KEY_DRAW_MODE = "draw_mode"
         const val KEY_PLAYERS = "players"
+        const val KEY_VIOLET_STONES = "violet_stones"
         const val KEY_PACK_CALL_VILLAGER_LIMIT = "pack_call_villager_limit"
         const val KEY_DAY_MINUTES = "day_minutes"
         const val KEY_DAY_AMBIENCE = "day_ambience"

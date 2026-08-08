@@ -28,6 +28,8 @@ class MainActivitySmokeTest {
 
         composeRule.onNodeWithText("Préparer la partie")
             .assertIsDisplayed()
+        composeRule.onNodeWithText("5 violettes")
+            .assertIsDisplayed()
         composeRule.onNodeWithText("LANCER LA PARTIE")
             .assertIsDisplayed()
     }
