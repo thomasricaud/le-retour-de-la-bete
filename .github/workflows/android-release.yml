@@ -200,12 +200,12 @@ jobs:
           exit 1
 
       - name: Attest APK build provenance
-        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
         with:
           subject-path: public-download/le-retour-de-la-bete.apk
 
       - name: Attest APK SBOM
-        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
         with:
           subject-path: public-download/le-retour-de-la-bete.apk
           sbom-path: public-download/le-retour-de-la-bete.cdx.json
