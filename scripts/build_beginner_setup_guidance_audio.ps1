@@ -70,6 +70,88 @@ function Get-LocalVoice {
     return $voice
 }
 
+function Get-DeliveryProfile {
+    param([Parameter(Mandatory)][string]$Basename)
+
+    if ($Basename -notmatch "debutant(?<Number>\d+)$") {
+        throw "Numéro de guidage absent : $Basename"
+    }
+    $profiles = @{
+        1 = @{ Rate = "-4%"; Pitch = "+1st" }
+        2 = @{ Rate = "-5%"; Pitch = "-1st" }
+        3 = @{ Rate = "-7%"; Pitch = "+0st" }
+        4 = @{ Rate = "-5%"; Pitch = "-1st" }
+        5 = @{ Rate = "-3%"; Pitch = "+0st" }
+        6 = @{ Rate = "-6%"; Pitch = "-1st" }
+        7 = @{ Rate = "-8%"; Pitch = "-2st" }
+        8 = @{ Rate = "-4%"; Pitch = "+1st" }
+        9 = @{ Rate = "-6%"; Pitch = "-1st" }
+        10 = @{ Rate = "-7%"; Pitch = "-2st" }
+        11 = @{ Rate = "-5%"; Pitch = "-1st" }
+    }
+    return $profiles[[int]$Matches.Number]
+}
+
+function ConvertTo-GuidanceSsml {
+    param(
+        [Parameter(Mandatory)][string]$Text,
+        [Parameter(Mandatory)][string]$Basename
+    )
+
+    $profile = Get-DeliveryProfile -Basename $Basename
+    $content = [System.Security.SecurityElement]::Escape($Text)
+    foreach ($phrase in @(
+        "Le retour de la Bête",
+        "loup-garou de sang",
+        "Venez à moi, ma meute, mes adorateurs !",
+        "APPEL",
+        "votre objectif",
+        "SUIVANT",
+        "VOIR"
+    )) {
+        $escapedPhrase = [System.Security.SecurityElement]::Escape($phrase)
+        $content = $content.Replace(
+            $escapedPhrase,
+            "<emphasis level=`"moderate`">$escapedPhrase</emphasis>"
+        )
+    }
+    $content = $content -replace "…", "…<break time=`"320ms`"/>"
+    $content = $content -replace "([.!?]) ", '$1<break time="180ms"/> '
+    return @"
+<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="fr-FR"><prosody rate="$($profile.Rate)" pitch="$($profile.Pitch)">$content</prosody></speak>
+"@
+}
+
+function Split-GuidanceText {
+    param(
+        [Parameter(Mandatory)][string]$Text,
+        [int]$MaximumLength = 700
+    )
+
+    $sentences = [regex]::Split($Text.Trim(), "(?<=[.!?…])\s+")
+    $chunks = [System.Collections.Generic.List[string]]::new()
+    $current = ""
+    foreach ($sentence in $sentences) {
+        $candidate = if ([string]::IsNullOrWhiteSpace($current)) {
+            $sentence
+        } else {
+            "$current $sentence"
+        }
+        if ($candidate.Length -le $MaximumLength) {
+            $current = $candidate
+        } else {
+            if (-not [string]::IsNullOrWhiteSpace($current)) {
+                $chunks.Add($current)
+            }
+            $current = $sentence
+        }
+    }
+    if (-not [string]::IsNullOrWhiteSpace($current)) {
+        $chunks.Add($current)
+    }
+    return $chunks.ToArray()
+}
+
 $maleVoice = Get-LocalVoice -DisplayName "Microsoft Paul"
 $femaleVoice = Get-LocalVoice -DisplayName "Microsoft Julie"
 
@@ -82,49 +164,83 @@ foreach ($asset in $assets) {
         throw "Voix impossible à déterminer pour $($asset.basename)."
     }
 
-    $wavePath = Join-Path $temporaryDirectory "$($asset.basename).wav"
     $normalizedWavePath = Join-Path $temporaryDirectory "$($asset.basename)-normalise.wav"
     $destination = Join-Path $OutputDirectory $asset.filename
     $synthesizer = New-Object Windows.Media.SpeechSynthesis.SpeechSynthesizer
+    $wavePaths = [System.Collections.Generic.List[string]]::new()
     try {
         $synthesizer.Voice = $voice
-        $operation = $synthesizer.SynthesizeTextToStreamAsync($asset.spoken_text)
-        $task = $asTaskMethod.MakeGenericMethod(
-            [Windows.Media.SpeechSynthesis.SpeechSynthesisStream]
-        ).Invoke($null, @($operation))
-        $task.Wait()
-        $speechStream = $task.Result
-        try {
-            $input = [System.IO.WindowsRuntimeStreamExtensions]::AsStreamForRead(
-                $speechStream
-            )
-            $output = [System.IO.File]::Create($wavePath)
+        $chunks = @(Split-GuidanceText -Text $asset.spoken_text)
+        for ($chunkIndex = 0; $chunkIndex -lt $chunks.Count; $chunkIndex++) {
+            $wavePath = Join-Path `
+                $temporaryDirectory `
+                "$($asset.basename)-$($chunkIndex + 1).wav"
+            $wavePaths.Add($wavePath)
+            $ssml = ConvertTo-GuidanceSsml `
+                -Text $chunks[$chunkIndex] `
+                -Basename $asset.basename
+            $operation = $synthesizer.SynthesizeSsmlToStreamAsync($ssml)
+            $task = $asTaskMethod.MakeGenericMethod(
+                [Windows.Media.SpeechSynthesis.SpeechSynthesisStream]
+            ).Invoke($null, @($operation))
+            $task.Wait()
+            $speechStream = $task.Result
             try {
-                $input.CopyTo($output)
+                $input = [System.IO.WindowsRuntimeStreamExtensions]::AsStreamForRead(
+                    $speechStream
+                )
+                $output = [System.IO.File]::Create($wavePath)
+                try {
+                    $input.CopyTo($output)
+                } finally {
+                    $output.Dispose()
+                    $input.Dispose()
+                }
             } finally {
-                $output.Dispose()
-                $input.Dispose()
+                $speechStream.Dispose()
             }
-        } finally {
-            $speechStream.Dispose()
         }
     } finally {
         $synthesizer.Dispose()
     }
 
-    & $FfmpegPath `
-        -hide_banner `
-        -loglevel error `
-        -i $wavePath `
-        -map_metadata -1 `
-        -af "highpass=f=70,lowpass=f=12500,acompressor=threshold=0.18:ratio=2.5:attack=15:release=180:makeup=1.25,loudnorm=I=-18:TP=-2:LRA=7,apad=pad_dur=0.12" `
-        -ac 1 `
-        -ar 44100 `
-        -c:a pcm_s16le `
-        -y `
-        $normalizedWavePath
+    $ffmpegArguments = @("-hide_banner", "-loglevel", "error")
+    foreach ($wavePath in $wavePaths) {
+        $ffmpegArguments += @("-i", $wavePath)
+    }
+    if ($wavePaths.Count -eq 1) {
+        $ffmpegArguments += @(
+            "-af",
+            "highpass=f=70,lowpass=f=12500,acompressor=threshold=0.18:ratio=2.5:attack=15:release=180:makeup=1.25,loudnorm=I=-18:TP=-2:LRA=7,apad=pad_dur=0.12",
+            "-map_metadata", "-1",
+            "-ac", "1",
+            "-ar", "44100",
+            "-c:a", "pcm_s16le",
+            "-y",
+            $normalizedWavePath
+        )
+    } else {
+        $concatInputs = (0..($wavePaths.Count - 1) | ForEach-Object { "[$($_):a]" }) -join ""
+        $filterComplex = "$concatInputs" +
+            "concat=n=$($wavePaths.Count):v=0:a=1[voice];" +
+            "[voice]highpass=f=70,lowpass=f=12500," +
+            "acompressor=threshold=0.18:ratio=2.5:attack=15:release=180:makeup=1.25," +
+            "loudnorm=I=-18:TP=-2:LRA=7,apad=pad_dur=0.12[out]"
+        $ffmpegArguments += @(
+            "-filter_complex",
+            $filterComplex,
+            "-map", "[out]",
+            "-map_metadata", "-1",
+            "-ac", "1",
+            "-ar", "44100",
+            "-c:a", "pcm_s16le",
+            "-y",
+            $normalizedWavePath
+        )
+    }
+    & $FfmpegPath @ffmpegArguments
     if ($LASTEXITCODE -ne 0) {
-        throw "Échec de normalisation : $wavePath"
+        throw "Échec de normalisation : $($asset.filename)"
     }
 
     & $Mp3EncoderPath `
@@ -138,7 +254,9 @@ foreach ($asset in $assets) {
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $destination)) {
         throw "Échec de production : $destination"
     }
-    Remove-Item -LiteralPath $wavePath
+    foreach ($wavePath in $wavePaths) {
+        Remove-Item -LiteralPath $wavePath
+    }
     Remove-Item -LiteralPath $normalizedWavePath
     Write-Output "Voix générée : $($asset.filename) ($($voice.DisplayName))"
 }

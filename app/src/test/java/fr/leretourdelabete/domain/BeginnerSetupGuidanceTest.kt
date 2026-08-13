@@ -29,7 +29,9 @@ class BeginnerSetupGuidanceTest {
         )
         assertTrue(steps.first().showCancel)
         assertFalse(steps.first().showPlaybackControls)
-        assertFalse(steps.last().showPlaybackControls)
+        assertTrue(steps.drop(1).all { !it.showCancel })
+        assertTrue(steps.drop(1).all { it.showPlaybackControls })
+        assertTrue(steps.last().spokenText.endsWith("appuyez sur SUIVANT puis lancez la partie."))
     }
 
     @Test
@@ -45,5 +47,9 @@ class BeginnerSetupGuidanceTest {
         assertTrue(steps[6].canPreview)
         assertEquals(SetupPreviewPermission.NONE, steps[4].previewPermission)
         assertEquals(SetupPreviewPermission.NONE, steps[6].previewPermission)
+        assertEquals(
+            listOf(2, 4, 5, 7),
+            steps.filter { it.canPreview }.map { it.number },
+        )
     }
 }

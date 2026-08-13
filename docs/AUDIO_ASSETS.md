@@ -14,7 +14,9 @@ Les 93 entrées du manifeste ont exactement un MP3 correspondant dans
 `app/src/main/res/raw/`. Les voix historiques produites par synthèse utilisent
 `fr-FR-RemyMultilingualNeural`, conformément à la validation. Les vingt-deux
 voix du guidage de préparation ont été produites hors ligne avec les voix
-françaises Windows Microsoft Paul et Microsoft Julie. Cinq des six
+françaises Windows Microsoft Paul et Microsoft Julie. Elles utilisent des
+profils SSML distincts par étape, avec des pauses et emphases ciblées pour une
+interprétation plus rythmée et plus proche de l'univers du jeu. Cinq des six
 montages locaux précédemment retenus sont conservés. Le synopsis et les deux
 minuteries de départ 30/45 secondes ont été remplacés par les pistes validées
 fournies pour cette version. Une quatrième piste dédiée au conseil de la
@@ -56,7 +58,9 @@ rédaction de ce document.
   l'attente silencieuse à cinq secondes.
 - Le choix Débutant lance d'abord un guidage de préparation de onze étapes avec
   la voix homme ou femme sélectionnée. Les boutons de la fenêtre pilotent la
-  lecture réelle et l'action « Voir » masque la fenêtre pendant cinq secondes.
+  lecture réelle et restent sur une même ligne. L'action « Voir » masque la
+  fenêtre pendant cinq secondes, tandis que « Suivant » passe immédiatement à
+  la piste suivante ou ferme le guidage après la dernière.
 - Une fois la partie lancée, les deux niveaux utilisent temporairement le même
   conducteur audio confirmé. Les anciennes pistes débutant de nuit restent
   présentes pour une réutilisation future, mais ne sont plus jouées pendant une

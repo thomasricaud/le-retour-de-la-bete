@@ -19,6 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,6 +37,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.leretourdelabete.GameUiState
 import fr.leretourdelabete.GameViewModel
@@ -62,7 +65,10 @@ fun RetourBeteApp(viewModel: GameViewModel = viewModel()) {
     val beginnerGuidance = state.beginnerGuidance
 
     BackHandler(enabled = beginnerGuidance != null) {
-        viewModel.cancelBeginnerGuidance()
+        val step = beginnerGuidance
+            ?.stepIndex
+            ?.let(BeginnerSetupGuidance.steps::getOrNull)
+        if (step?.showCancel == true) viewModel.cancelBeginnerGuidance()
     }
 
     BackHandler(enabled = screen != GameScreen.HOME && beginnerGuidance == null) {
@@ -151,68 +157,71 @@ fun RetourBeteApp(viewModel: GameViewModel = viewModel()) {
         ?.takeUnless { it.isPreviewing }
         ?.let { guidance ->
             val step = BeginnerSetupGuidance.steps[guidance.stepIndex]
-            AlertDialog(
+            Dialog(
                 onDismissRequest = {
                     if (step.showCancel) viewModel.cancelBeginnerGuidance()
                 },
-                title = {
-                    Text("Guidage · ${step.number}/${BeginnerSetupGuidance.steps.size}")
-                },
-                text = {
-                    Text(
-                        if (guidance.isComplete) {
-                            if (step.number == BeginnerSetupGuidance.steps.size) {
-                                "Le guidage de préparation est terminé."
-                            } else {
-                                "Étape terminée. Appuyez sur SUITE."
-                            }
-                        } else if (guidance.isPlaying) {
-                            "Écoutez les instructions. Le déroulement de l'application est suspendu."
-                        } else {
-                            "Lecture en pause."
-                        },
-                    )
-                },
-                confirmButton = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically,
+                properties = DialogProperties(usePlatformDefaultWidth = false),
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(0.86f),
+                    shape = MaterialTheme.shapes.extraLarge,
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 6.dp,
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 28.dp, vertical = 22.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
-                        if (step.showPlaybackControls) {
-                            TextButton(onClick = viewModel::repeatBeginnerGuidance) {
-                                Text("RÉPÉTER")
+                        Text(
+                            "Guidage · ${step.number}/${BeginnerSetupGuidance.steps.size}",
+                            style = MaterialTheme.typography.headlineSmall,
+                        )
+                        Text(
+                            if (guidance.isComplete) {
+                                "Étape terminée. Appuyez sur SUIVANT."
+                            } else if (guidance.isPlaying) {
+                                "Écoutez les instructions. Le déroulement de l'application est suspendu."
+                            } else {
+                                "Lecture en pause."
+                            },
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(
+                                space = 10.dp,
+                                alignment = Alignment.End,
+                            ),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            if (step.showCancel) {
+                                TextButton(onClick = viewModel::cancelBeginnerGuidance) {
+                                    Text("ANNULER", softWrap = false)
+                                }
                             }
-                            TextButton(onClick = viewModel::toggleBeginnerGuidancePlayback) {
-                                Text(if (guidance.isPlaying) "PAUSE" else "LECTURE")
+                            if (step.showPlaybackControls) {
+                                TextButton(onClick = viewModel::repeatBeginnerGuidance) {
+                                    Text("RÉPÉTER", softWrap = false)
+                                }
+                                TextButton(onClick = viewModel::toggleBeginnerGuidancePlayback) {
+                                    Text(
+                                        if (guidance.isPlaying) "PAUSE" else "LECTURE",
+                                        softWrap = false,
+                                    )
+                                }
                             }
-                        }
-                        if (step.canPreview) {
-                            TextButton(onClick = viewModel::previewBeginnerGuidanceScreen) {
-                                Text("VOIR")
+                            if (step.canPreview) {
+                                TextButton(onClick = viewModel::previewBeginnerGuidanceScreen) {
+                                    Text("VOIR", softWrap = false)
+                                }
                             }
-                        }
-                        TextButton(onClick = viewModel::advanceBeginnerGuidance) {
-                            Text(
-                                when {
-                                    guidance.isPlaying -> "PASSER"
-                                    step.number == BeginnerSetupGuidance.steps.size -> "OK"
-                                    else -> "SUITE"
-                                },
-                            )
+                            TextButton(onClick = viewModel::advanceBeginnerGuidance) {
+                                Text("SUIVANT", softWrap = false)
+                            }
                         }
                     }
-                },
-                dismissButton = if (step.showCancel) {
-                    {
-                        TextButton(onClick = viewModel::cancelBeginnerGuidance) {
-                            Text("ANNULER")
-                        }
-                    }
-                } else {
-                    null
-                },
-            )
+                }
+            }
         }
 
     state.availableUpdate?.takeIf { screen == GameScreen.HOME }?.let { update ->
@@ -462,7 +471,7 @@ private fun SetupScreen(
             ) {
                 ScreenTitle(
                     title = "Préparer la partie",
-                    subtitle = "Une configuration simple, sans saisir aucun rôle.",
+                    subtitle = "Choisir le format et préparer la table.",
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     AudioRouteBadge(state.audioRoute)
