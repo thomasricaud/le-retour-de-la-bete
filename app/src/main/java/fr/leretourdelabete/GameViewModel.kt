@@ -19,6 +19,7 @@ import fr.leretourdelabete.data.AppUpdateInstallResult
 import fr.leretourdelabete.data.GitHubReleaseUpdateChecker
 import fr.leretourdelabete.data.PendingAppUpdateDownload
 import fr.leretourdelabete.domain.CueKind
+import fr.leretourdelabete.domain.BeginnerSetupGuidance
 import fr.leretourdelabete.domain.ConfirmedFirstNightTimeline
 import fr.leretourdelabete.domain.ConfirmedLaterNightTimeline
 import fr.leretourdelabete.domain.GameCue
@@ -27,6 +28,7 @@ import fr.leretourdelabete.domain.NightDeck
 import fr.leretourdelabete.domain.PackCallRule
 import fr.leretourdelabete.domain.VioletStoneRules
 import fr.leretourdelabete.model.DayStage
+import fr.leretourdelabete.model.GameMode
 import fr.leretourdelabete.model.DrawMode
 import fr.leretourdelabete.model.EndReason
 import fr.leretourdelabete.model.GameScreen
@@ -50,6 +52,14 @@ data class UpdateDownloadUiState(
     val readyToInstall: Boolean = false,
 )
 
+data class BeginnerGuidanceUiState(
+    val stepIndex: Int,
+    val remainingMillis: Long,
+    val isPlaying: Boolean,
+    val isComplete: Boolean,
+    val isPreviewing: Boolean = false,
+)
+
 data class GameUiState(
     val session: GameSession = GameSession(),
     val setup: SetupOptions = SetupOptions(),
@@ -65,6 +75,7 @@ data class GameUiState(
     val audioRoute: AudioRouteState = AudioRouteState(),
     val statusMessage: String? = null,
     val standaloneCueId: String? = null,
+    val beginnerGuidance: BeginnerGuidanceUiState? = null,
     val availableUpdate: AppUpdate? = null,
     val updateDownload: UpdateDownloadUiState? = null,
     val showUpdateInstallPrompt: Boolean = false,
@@ -99,6 +110,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private var dayTimerJob: Job? = null
     private var dayStageAudioJob: Job? = null
     private var standaloneJob: Job? = null
+    private var beginnerGuidanceJob: Job? = null
+    private var beginnerPreviewJob: Job? = null
     private var updateDownloadJob: Job? = null
     private var lastPersistedSecond: Long = -1L
     private var waitingForInstallPermission = false
@@ -124,10 +137,78 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.value = _uiState.value.copy(setup = transform(_uiState.value.setup))
     }
 
+    fun selectGuidanceMode(mode: GameMode) {
+        val setup = _uiState.value.setup.copy(mode = mode)
+        _uiState.value = _uiState.value.copy(setup = setup, statusMessage = null)
+        if (mode == GameMode.BEGINNER) {
+            playBeginnerGuidanceStep(0)
+        } else {
+            dismissBeginnerGuidance()
+        }
+    }
+
+    fun toggleBeginnerGuidancePlayback() {
+        val guidance = _uiState.value.beginnerGuidance ?: return
+        if (guidance.isComplete) return
+        if (guidance.isPlaying) {
+            pauseBeginnerGuidance()
+        } else if (audioEngine.resumeForeground()) {
+            _uiState.value = _uiState.value.copy(
+                beginnerGuidance = guidance.copy(
+                    remainingMillis = audioEngine.foregroundRemainingMillis(),
+                    isPlaying = true,
+                ),
+                statusMessage = null,
+            )
+            startBeginnerGuidanceClock()
+        }
+    }
+
+    fun repeatBeginnerGuidance() {
+        val guidance = _uiState.value.beginnerGuidance ?: return
+        playBeginnerGuidanceStep(guidance.stepIndex)
+    }
+
+    fun advanceBeginnerGuidance() {
+        val guidance = _uiState.value.beginnerGuidance ?: return
+        if (guidance.stepIndex == BeginnerSetupGuidance.steps.lastIndex) {
+            dismissBeginnerGuidance()
+        } else {
+            playBeginnerGuidanceStep(guidance.stepIndex + 1)
+        }
+    }
+
+    fun previewBeginnerGuidanceScreen() {
+        val guidance = _uiState.value.beginnerGuidance ?: return
+        if (!BeginnerSetupGuidance.steps[guidance.stepIndex].canPreview) return
+        beginnerPreviewJob?.cancel()
+        _uiState.value = _uiState.value.copy(
+            beginnerGuidance = guidance.copy(isPreviewing = true),
+        )
+        beginnerPreviewJob = viewModelScope.launch {
+            delay(5_000L)
+            _uiState.value.beginnerGuidance?.let { current ->
+                if (current.stepIndex == guidance.stepIndex) {
+                    _uiState.value = _uiState.value.copy(
+                        beginnerGuidance = current.copy(isPreviewing = false),
+                    )
+                }
+            }
+            beginnerPreviewJob = null
+        }
+    }
+
+    fun cancelBeginnerGuidance() {
+        val setup = _uiState.value.setup.copy(mode = GameMode.CONFIRMED)
+        dismissBeginnerGuidance()
+        _uiState.value = _uiState.value.copy(setup = setup)
+    }
+
     fun openSetup() {
         stopAllPlayback()
         _uiState.value = _uiState.value.copy(
             session = GameSession(screen = GameScreen.BLUETOOTH_SETUP),
+            setup = _uiState.value.setup.copy(mode = GameMode.CONFIRMED),
             statusMessage = null,
         )
     }
@@ -947,6 +1028,84 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private fun playBeginnerGuidanceStep(stepIndex: Int) {
+        beginnerGuidanceJob?.cancel()
+        beginnerGuidanceJob = null
+        beginnerPreviewJob?.cancel()
+        beginnerPreviewJob = null
+        audioEngine.stopForeground()
+
+        val step = BeginnerSetupGuidance.steps[stepIndex]
+        val resourceName = step.audioResource(_uiState.value.setup.aiVoice)
+        val playback = audioEngine.playForeground(resourceName)
+        _uiState.value = _uiState.value.copy(
+            beginnerGuidance = BeginnerGuidanceUiState(
+                stepIndex = stepIndex,
+                remainingMillis = playback.durationMillis,
+                isPlaying = playback.available,
+                isComplete = !playback.available,
+            ),
+            statusMessage = if (playback.available) {
+                null
+            } else {
+                "Fichier « $resourceName.mp3 » introuvable. Vous pouvez passer à la suite."
+            },
+        )
+        if (playback.available) startBeginnerGuidanceClock()
+    }
+
+    private fun startBeginnerGuidanceClock() {
+        beginnerGuidanceJob?.cancel()
+        beginnerGuidanceJob = viewModelScope.launch {
+            while (_uiState.value.beginnerGuidance?.isPlaying == true) {
+                delay(200L)
+                val current = _uiState.value.beginnerGuidance ?: break
+                val remaining = audioEngine.foregroundRemainingMillis()
+                if (remaining <= 0L) {
+                    audioEngine.stopForeground()
+                    _uiState.value = _uiState.value.copy(
+                        beginnerGuidance = current.copy(
+                            remainingMillis = 0L,
+                            isPlaying = false,
+                            isComplete = true,
+                        ),
+                    )
+                    break
+                }
+                _uiState.value = _uiState.value.copy(
+                    beginnerGuidance = current.copy(remainingMillis = remaining),
+                )
+            }
+            beginnerGuidanceJob = null
+        }
+    }
+
+    private fun pauseBeginnerGuidance(message: String? = null) {
+        val guidance = _uiState.value.beginnerGuidance ?: return
+        audioEngine.pauseForeground()
+        beginnerGuidanceJob?.cancel()
+        beginnerGuidanceJob = null
+        _uiState.value = _uiState.value.copy(
+            beginnerGuidance = guidance.copy(
+                remainingMillis = audioEngine.foregroundRemainingMillis(),
+                isPlaying = false,
+            ),
+            statusMessage = message,
+        )
+    }
+
+    private fun dismissBeginnerGuidance() {
+        beginnerGuidanceJob?.cancel()
+        beginnerGuidanceJob = null
+        beginnerPreviewJob?.cancel()
+        beginnerPreviewJob = null
+        audioEngine.stopForeground()
+        _uiState.value = _uiState.value.copy(
+            beginnerGuidance = null,
+            statusMessage = null,
+        )
+    }
+
     private fun moveToDayStage(next: DayStage) {
         dayTimerJob?.cancel()
         dayTimerJob = null
@@ -1060,6 +1219,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun handleAudioInterruption(message: String) {
+        if (_uiState.value.beginnerGuidance?.isPlaying == true) {
+            pauseBeginnerGuidance(message)
+            return
+        }
         if (_uiState.value.isSequencePlaying) {
             pauseSequence(message)
             return
@@ -1151,6 +1314,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun stopAllPlayback() {
         stopSequenceClock()
+        beginnerGuidanceJob?.cancel()
+        beginnerGuidanceJob = null
+        beginnerPreviewJob?.cancel()
+        beginnerPreviewJob = null
         dayTimerJob?.cancel()
         dayTimerJob = null
         dayStageAudioJob?.cancel()
@@ -1162,6 +1329,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             isSequencePlaying = false,
             dayTimerPlaying = false,
             standaloneCueId = null,
+            beginnerGuidance = null,
         )
     }
 

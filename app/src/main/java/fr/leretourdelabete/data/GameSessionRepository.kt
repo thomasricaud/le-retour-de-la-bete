@@ -58,7 +58,7 @@ class GameSessionRepository(context: Context) {
             ),
             mode = enumValueOrDefault(
                 preferences.getString(KEY_MODE, null),
-                GameMode.BEGINNER,
+                GameMode.CONFIRMED,
             ),
             drawMode = enumValueOrDefault(
                 preferences.getString(KEY_DRAW_MODE, null),

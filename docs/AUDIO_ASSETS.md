@@ -1,18 +1,20 @@
 # Ressources audio
 
-Ce document est le contrat de production et d'intégration des 71 ressources audio
+Ce document est le contrat de production et d'intégration des 93 ressources audio
 livrées avec l'application.
 
-Les 66 fichiers audio du manifeste sont fournis dans le dépôt. Les textes
+Les 93 fichiers audio du manifeste sont fournis dans le dépôt. Les textes
 ci-dessous sont les textes français exacts utilisés pour les voix. Ne pas
 ajouter à l'enregistrement les indications de production signalées comme non
 parlées.
 
 ## État d'intégration
 
-Les 66 entrées du manifeste ont exactement un MP3 correspondant dans
-`app/src/main/res/raw/`. Les voix produites par synthèse utilisent
-`fr-FR-RemyMultilingualNeural`, conformément à la validation. Cinq des six
+Les 93 entrées du manifeste ont exactement un MP3 correspondant dans
+`app/src/main/res/raw/`. Les voix historiques produites par synthèse utilisent
+`fr-FR-RemyMultilingualNeural`, conformément à la validation. Les vingt-deux
+voix du guidage de préparation ont été produites hors ligne avec les voix
+françaises Windows Microsoft Paul et Microsoft Julie. Cinq des six
 montages locaux précédemment retenus sont conservés. Le synopsis et les deux
 minuteries de départ 30/45 secondes ont été remplacés par les pistes validées
 fournies pour cette version. Une quatrième piste dédiée au conseil de la
@@ -25,6 +27,10 @@ régénérer. `scripts/build_complete_audio_catalog.py` reconstruit le catalogue
 complet dans `artifacts/` pour écoute avant remplacement. Le script
 `scripts/build_local_audio_candidates.ps1` reproduit séparément les six montages
 issus des longues pistes sources.
+Le script `scripts/build_beginner_setup_guidance_audio.ps1` reproduit dans
+`artifacts/guidage-debutant-candidat/` les onze pistes homme et les onze pistes
+femme à partir des textes exacts du manifeste, sans transmettre ces textes à
+un service distant.
 
 ## Contrat Android
 
@@ -48,9 +54,13 @@ rédaction de ce document.
   `MediaPlayer` est utilisée.
 - Si une voix de séquence manque, le moteur conserve le texte à l'écran et limite
   l'attente silencieuse à cinq secondes.
-- Les deux niveaux de guidage utilisent temporairement le même conducteur audio
-  confirmé. Les anciennes pistes débutant restent présentes pour une réutilisation
-  future, mais ne sont plus jouées pendant une partie.
+- Le choix Débutant lance d'abord un guidage de préparation de onze étapes avec
+  la voix homme ou femme sélectionnée. Les boutons de la fenêtre pilotent la
+  lecture réelle et l'action « Voir » masque la fenêtre pendant cinq secondes.
+- Une fois la partie lancée, les deux niveaux utilisent temporairement le même
+  conducteur audio confirmé. Les anciennes pistes débutant de nuit restent
+  présentes pour une réutilisation future, mais ne sont plus jouées pendant une
+  partie.
 - La première nuit est une piste continue de 152 secondes. Les quatre
   pistes `*_avance_*` remplacent la lecture en cours lorsque le joueur avance vers
   un seuil précis.
@@ -85,6 +95,19 @@ rédaction de ce document.
   des boucles sans raccord audible.
 
 ## Inventaire exhaustif
+
+### Guidage de préparation débutant
+
+- Voix homme : `guidage_homme_debutant1.mp3` à
+  `guidage_homme_debutant11.mp3`.
+- Voix femme : `guidage_femme_debutant1.mp3` à
+  `guidage_femme_debutant11.mp3`.
+- Type : voix, non bouclées.
+- Les textes exacts et les 22 noms individuels sont enregistrés dans
+  `app/src/main/assets/audio_manifest.json`.
+- Étapes 2, 4, 5 et 7 : bouton « Voir ». Pendant les étapes 2 et 4, seules les
+  options explicitement autorisées restent modifiables ; pour les étapes 5 et
+  7, l'écran est visible mais inactif.
 
 ### Commun
 

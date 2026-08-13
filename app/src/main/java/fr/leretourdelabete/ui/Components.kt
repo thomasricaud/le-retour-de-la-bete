@@ -197,9 +197,11 @@ fun ToggleChoice(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     accent: Color = BloodRedBright,
+    enabled: Boolean = true,
 ) {
     OutlinedButton(
         onClick = onClick,
+        enabled = enabled,
         modifier = modifier.heightIn(min = 48.dp),
         shape = RoundedCornerShape(14.dp),
         border = androidx.compose.foundation.BorderStroke(

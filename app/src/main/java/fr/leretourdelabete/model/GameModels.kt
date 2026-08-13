@@ -57,7 +57,7 @@ enum class EndReason {
 
 data class SetupOptions(
     val playerCount: Int = 6,
-    val mode: GameMode = GameMode.BEGINNER,
+    val mode: GameMode = GameMode.CONFIRMED,
     val drawMode: DrawMode = DrawMode.APPLICATION,
     val dayDurationMinutes: Int = 5,
     val dayAmbienceEnabled: Boolean = true,
@@ -66,7 +66,7 @@ data class SetupOptions(
 
 data class GameSession(
     val screen: GameScreen = GameScreen.HOME,
-    val mode: GameMode = GameMode.BEGINNER,
+    val mode: GameMode = GameMode.CONFIRMED,
     val drawMode: DrawMode = DrawMode.APPLICATION,
     val playerCount: Int = 6,
     val violetStonesInWolfBox: Int = VioletStoneRules.initialCount(playerCount),

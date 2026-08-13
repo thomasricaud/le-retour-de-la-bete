@@ -55,18 +55,21 @@ non bloquante vérifie uniquement la dernière release GitHub au démarrage.
 - Téléchargement suivi par le gestionnaire Android lorsqu'une release GitHub
   plus récente existe, puis proposition d'ouvrir l'installateur ; sans
   connexion, l'application démarre normalement et n'affiche aucune erreur.
-- Le catalogue prévoit 71 ressources audio. L'ambiance nocturne tourne en
+- Le catalogue prévoit 93 ressources audio. L'ambiance nocturne tourne en
   continu pendant la nuit. Le jour utilise des sons dédiés à la concertation,
   au conseil, au rituel de guérison et à la victoire sur la Bête. Les consignes
   et effets sont joués sur un lecteur indépendant. Une ressource absente est
   remplacée par son texte affiché, sans bloquer la partie.
 
-Le catalogue complet des 71 enregistrements attendus se trouve dans
+Le catalogue complet des 93 enregistrements attendus se trouve dans
 [`docs/AUDIO_ASSETS.md`](docs/AUDIO_ASSETS.md). Le manifeste exploitable par un
 outil de production se trouve dans
 [`app/src/main/assets/audio_manifest.json`](app/src/main/assets/audio_manifest.json).
 Les vingt annonces suffixées `_seuil_1` à `_seuil_5` énoncent directement le
 seuil fixé au lancement de la partie et sont intégrées dans `res/raw`.
+Les vingt-deux pistes `guidage_homme_debutant*` et
+`guidage_femme_debutant*` accompagnent les onze étapes de préparation du mode
+débutant en respectant le choix de voix.
 
 ## Régénérer les sons
 

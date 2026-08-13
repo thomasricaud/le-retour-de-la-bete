@@ -42,7 +42,9 @@ import fr.leretourdelabete.GameViewModel
 import fr.leretourdelabete.BuildConfig
 import fr.leretourdelabete.R
 import fr.leretourdelabete.domain.GameSequenceFactory
+import fr.leretourdelabete.domain.BeginnerSetupGuidance
 import fr.leretourdelabete.domain.PackCallRule
+import fr.leretourdelabete.domain.SetupPreviewPermission
 import fr.leretourdelabete.model.AiVoice
 import fr.leretourdelabete.model.DrawMode
 import fr.leretourdelabete.model.GameMode
@@ -57,8 +59,13 @@ import kotlinx.coroutines.delay
 fun RetourBeteApp(viewModel: GameViewModel = viewModel()) {
     val state by viewModel.uiState.collectAsState()
     val screen = state.session.screen
+    val beginnerGuidance = state.beginnerGuidance
 
-    BackHandler(enabled = screen != GameScreen.HOME) {
+    BackHandler(enabled = beginnerGuidance != null) {
+        viewModel.cancelBeginnerGuidance()
+    }
+
+    BackHandler(enabled = screen != GameScreen.HOME && beginnerGuidance == null) {
         when (screen) {
             GameScreen.BLUETOOTH_SETUP,
             GameScreen.HELP,
@@ -96,6 +103,7 @@ fun RetourBeteApp(viewModel: GameViewModel = viewModel()) {
                 state = state,
                 onBack = viewModel::returnToBluetoothSetup,
                 onUpdate = viewModel::updateSetup,
+                onSelectGuidanceMode = viewModel::selectGuidanceMode,
                 onStart = viewModel::startConfiguredGame,
             )
             GameScreen.INTRO,
@@ -138,6 +146,74 @@ fun RetourBeteApp(viewModel: GameViewModel = viewModel()) {
             )
         }
     }
+
+    beginnerGuidance
+        ?.takeUnless { it.isPreviewing }
+        ?.let { guidance ->
+            val step = BeginnerSetupGuidance.steps[guidance.stepIndex]
+            AlertDialog(
+                onDismissRequest = {
+                    if (step.showCancel) viewModel.cancelBeginnerGuidance()
+                },
+                title = {
+                    Text("Guidage · ${step.number}/${BeginnerSetupGuidance.steps.size}")
+                },
+                text = {
+                    Text(
+                        if (guidance.isComplete) {
+                            if (step.number == BeginnerSetupGuidance.steps.size) {
+                                "Le guidage de préparation est terminé."
+                            } else {
+                                "Étape terminée. Appuyez sur SUITE."
+                            }
+                        } else if (guidance.isPlaying) {
+                            "Écoutez les instructions. Le déroulement de l'application est suspendu."
+                        } else {
+                            "Lecture en pause."
+                        },
+                    )
+                },
+                confirmButton = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        if (step.showPlaybackControls) {
+                            TextButton(onClick = viewModel::repeatBeginnerGuidance) {
+                                Text("RÉPÉTER")
+                            }
+                            TextButton(onClick = viewModel::toggleBeginnerGuidancePlayback) {
+                                Text(if (guidance.isPlaying) "PAUSE" else "LECTURE")
+                            }
+                        }
+                        if (step.canPreview) {
+                            TextButton(onClick = viewModel::previewBeginnerGuidanceScreen) {
+                                Text("VOIR")
+                            }
+                        }
+                        TextButton(onClick = viewModel::advanceBeginnerGuidance) {
+                            Text(
+                                when {
+                                    guidance.isPlaying -> "PASSER"
+                                    step.number == BeginnerSetupGuidance.steps.size -> "OK"
+                                    else -> "SUITE"
+                                },
+                            )
+                        }
+                    }
+                },
+                dismissButton = if (step.showCancel) {
+                    {
+                        TextButton(onClick = viewModel::cancelBeginnerGuidance) {
+                            Text("ANNULER")
+                        }
+                    }
+                } else {
+                    null
+                },
+            )
+        }
 
     state.availableUpdate?.takeIf { screen == GameScreen.HOME }?.let { update ->
         AlertDialog(
@@ -358,9 +434,21 @@ private fun SetupScreen(
     state: GameUiState,
     onBack: () -> Unit,
     onUpdate: ((fr.leretourdelabete.model.SetupOptions) -> fr.leretourdelabete.model.SetupOptions) -> Unit,
+    onSelectGuidanceMode: (GameMode) -> Unit,
     onStart: () -> Unit,
 ) {
     val setup = state.setup
+    val guidance = state.beginnerGuidance
+    val previewPermission = guidance
+        ?.takeIf { it.isPreviewing }
+        ?.let { BeginnerSetupGuidance.steps[it.stepIndex].previewPermission }
+    val playerCountEnabled = guidance == null || previewPermission in setOf(
+        SetupPreviewPermission.PLAYER_COUNT,
+        SetupPreviewPermission.PLAYER_COUNT_AND_DRAW_MODE,
+    )
+    val drawModeEnabled = guidance == null ||
+        previewPermission == SetupPreviewPermission.PLAYER_COUNT_AND_DRAW_MODE
+    val generalOptionsEnabled = guidance == null
     GameBackdrop {
         Column(
             modifier = Modifier
@@ -412,20 +500,23 @@ private fun SetupScreen(
                             onPlus = {
                                 onUpdate { it.copy(playerCount = (it.playerCount + 1).coerceAtMost(20)) }
                             },
+                            enabled = playerCountEnabled,
                         )
                         OptionLabel("Niveau de guidage")
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             ToggleChoice(
                                 "DÉBUTANT",
                                 setup.mode == GameMode.BEGINNER,
-                                { onUpdate { it.copy(mode = GameMode.BEGINNER) } },
+                                { onSelectGuidanceMode(GameMode.BEGINNER) },
                                 Modifier.weight(1f),
+                                enabled = generalOptionsEnabled,
                             )
                             ToggleChoice(
                                 "CONFIRMÉ",
                                 setup.mode == GameMode.CONFIRMED,
-                                { onUpdate { it.copy(mode = GameMode.CONFIRMED) } },
+                                { onSelectGuidanceMode(GameMode.CONFIRMED) },
                                 Modifier.weight(1f),
+                                enabled = generalOptionsEnabled,
                             )
                         }
                         OptionLabel("Tirage des nuits")
@@ -435,12 +526,14 @@ private fun SetupScreen(
                                 setup.drawMode == DrawMode.APPLICATION,
                                 { onUpdate { it.copy(drawMode = DrawMode.APPLICATION) } },
                                 Modifier.weight(1f),
+                                enabled = drawModeEnabled,
                             )
                             ToggleChoice(
                                 "CARTES PHYSIQUES",
                                 setup.drawMode == DrawMode.PHYSICAL_CARDS,
                                 { onUpdate { it.copy(drawMode = DrawMode.PHYSICAL_CARDS) } },
                                 Modifier.weight(1f),
+                                enabled = drawModeEnabled,
                             )
                         }
                         OptionLabel("Durée de concertation du jour")
@@ -451,6 +544,7 @@ private fun SetupScreen(
                                     setup.dayDurationMinutes == minutes,
                                     { onUpdate { it.copy(dayDurationMinutes = minutes) } },
                                     Modifier.weight(1f),
+                                    enabled = generalOptionsEnabled,
                                 )
                             }
                         }
@@ -460,6 +554,7 @@ private fun SetupScreen(
                         ) {
                             Checkbox(
                                 checked = setup.dayAmbienceEnabled,
+                                enabled = generalOptionsEnabled,
                                 onCheckedChange = { enabled ->
                                     onUpdate { it.copy(dayAmbienceEnabled = enabled) }
                                 },
@@ -477,12 +572,14 @@ private fun SetupScreen(
                                 setup.aiVoice == AiVoice.MALE,
                                 { onUpdate { it.copy(aiVoice = AiVoice.MALE) } },
                                 Modifier.weight(1f),
+                                enabled = generalOptionsEnabled,
                             )
                             ToggleChoice(
                                 "FEMME",
                                 setup.aiVoice == AiVoice.FEMALE,
                                 { onUpdate { it.copy(aiVoice = AiVoice.FEMALE) } },
                                 Modifier.weight(1f),
+                                enabled = generalOptionsEnabled,
                             )
                         }
                     }
@@ -513,6 +610,7 @@ private fun SetupScreen(
                     LargeActionButton(
                         label = "LANCER LA PARTIE",
                         onClick = onStart,
+                        enabled = generalOptionsEnabled,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
@@ -595,6 +693,7 @@ private fun StepperRow(
     value: String,
     onMinus: () -> Unit,
     onPlus: () -> Unit,
+    enabled: Boolean = true,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -603,14 +702,14 @@ private fun StepperRow(
     ) {
         Text(label, color = Parchment, style = MaterialTheme.typography.bodyLarge)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            ToggleChoice("−", false, onMinus)
+            ToggleChoice("−", false, onMinus, enabled = enabled)
             Text(
                 value,
                 style = MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.width(64.dp),
             )
-            ToggleChoice("+", false, onPlus)
+            ToggleChoice("+", false, onPlus, enabled = enabled)
         }
     }
 }

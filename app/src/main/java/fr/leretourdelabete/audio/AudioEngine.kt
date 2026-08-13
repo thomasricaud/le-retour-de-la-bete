@@ -131,6 +131,26 @@ class AudioEngine(
         ambiencePlayer?.takeIf { it.isPlaying }?.pause()
     }
 
+    fun pauseForeground() {
+        foregroundPlayer?.takeIf { it.isPlaying }?.pause()
+    }
+
+    fun resumeForeground(): Boolean {
+        val player = foregroundPlayer ?: return false
+        return runCatching {
+            requestAudioFocus()
+            if (!player.isPlaying) player.start()
+            true
+        }.getOrDefault(false)
+    }
+
+    fun foregroundRemainingMillis(): Long {
+        val player = foregroundPlayer ?: return 0L
+        return runCatching {
+            (player.duration - player.currentPosition).toLong().coerceAtLeast(0L)
+        }.getOrDefault(0L)
+    }
+
     fun pauseAmbience() {
         ambiencePlayer?.takeIf { it.isPlaying }?.pause()
     }
